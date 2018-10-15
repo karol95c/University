@@ -1,0 +1,11 @@
+----------------------------------------------------------------------------------------------
+Zdefiniuj klasę opakowującą plik tekstowy line reader. Obiekt takiej klasy ma przetrzymywać
+referencję do strumienia plikowego, otworzonego do czytania. Zadaniem obiektów tej klasy
+będzie czytanie z pliku wiersz po wierszu. Gdy strumień nie będzie już mógł odczytać następnej
+linii (koniec pliku) należy zgłosić odpowiedni wyjątek.
+Następnie stwórz sprytny wskaźnik shared ptr<>, który zamknie plik w momencie, gdy
+ostatni sprytny wskaźnik na ten zasób będzie likwidowany.
+Napisz program, który rzetelnie przetestuje popraność zachowania takiego wskaźnika typu
+shared ptr<> na wypadek wywołania funkcji usuwającej obiekt line reader. Co się stanie,
+gdy obiekt line reader zgłosi wyjątek?
+----------------------------------------------------------------------------------------------
