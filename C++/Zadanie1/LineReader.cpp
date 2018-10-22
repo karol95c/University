@@ -49,12 +49,12 @@ void testReadLines()
     auto object2 = object;
     auto object3 = object;
     auto object4 = object;
-    std::cout << "Liczba obiektów: " << object.use_count() << "\n";
+    std::cout << "Objects count: " << object.use_count() << "\n";
     std::cout << "object.readLines(): " << std::endl;
     object->readLines();
-    std::cout << "Liczba obiektów: " << object.use_count() << "\n";
+    std::cout << "Objects count: " << object.use_count() << "\n";
 
-    std::cout << "object.readLines() dla drugiego wskaźnika: " << std::endl;
+    std::cout << "object.readLines() for second shared_ptr: " << std::endl;
     object1->readLines();
 }
 
@@ -67,19 +67,19 @@ void testClosingFile()
         auto object2 = object;
         auto object3 = object;
         auto object4 = object;
-        std::cout << "Liczba obiektów: " << object.use_count() << "\n";
+        std::cout << "Objects count: " << object.use_count() << "\n";
     }
-    std::cout << "Liczba obiektów: " << object.use_count() << "\n";
+    std::cout << "Objects count: " << object.use_count() << "\n";
     object.reset();
     if(!f1.is_open())
     {
-        std::cout<< "Plik został zamknięty!\n";
+        std::cout<< "File has been closed\n";
     }
 }
 int main()
 {
-    std::cout << "Test liczby obiektów oraz funkcji ReadLines(): " << std::endl;
+    std::cout << "Objects counter and ReadLines test: " << std::endl;
     testReadLines();
-    std::cout << "Test zamykania pliku: " << std::endl;
+    std::cout << "Closing file test: " << std::endl;
     testClosingFile();
 }
