@@ -1,0 +1,35 @@
+div#test p:first-of-type {text-decoration: underline;}
+div#test p:last-of-type {color: red;}
+div#testonly p:only-of-type {font-weight: bold;}
+
+div#nthtest > *:nth-child(3n+1) {
+	color: #CB000F;
+}
+
+div#nthtest div:nth-of-type(5n+2) {
+	background-color: #9999ff;
+}
+
+div#nthlast *:nth-last-child(odd) {
+    background: red;
+}
+
+div#nthlast div:nth-last-of-type(even) {
+    color: green;
+}
+
+div#last p:last-child {
+    background: yellow;
+}
+
+:root { 
+    background: grey;
+}
+
+:not(h1){
+	background: coral;
+}
+::selection {
+    color: pink; 
+    background: green;
+}

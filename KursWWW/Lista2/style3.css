@@ -1,0 +1,32 @@
+
+p {
+    /*type*/
+    background-color: blue;
+}
+
+p span {
+    /*descendant*/
+    border: dotted 2px;
+    background-color: purple;
+}
+
+div > span {
+    /*child*/
+    border: groove 2px brown;
+}
+
+div + h1 {
+    /*adjacent*/
+    border: dotted 2px;
+    text-align: left;
+}
+
+#my_txt {
+    color: powderblue;
+}
+
+.class {
+    /*class*/
+    width: 200px;
+    background-color: slateblue;
+}
