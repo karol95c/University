@@ -26,11 +26,6 @@ class Matrix
             });
         }
     }
-    Matrix(int p, int a) : 
-        size(p),
-        elements(std::vector<std::vector<double>>(p, std::vector<double>(p, a)))
-    {
-    }
 
     int getSize() const
     {
@@ -83,17 +78,16 @@ Matrix multiple(const Matrix& a, const Matrix& b)
 double countTime(int size, int n)
 {
     double time = 0;
+    auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < n; ++i)
     {
         Matrix* a = new Matrix(size);
-        auto start = std::chrono::high_resolution_clock::now();
         Matrix res = multiple(*a, *a);
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> elapsed_time = end - start;
-        time += elapsed_time.count();
         delete a;
     }
-    return time / n;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time = end - start;
+    return elapsed_time.count() / n;
 }
 
 int main()
