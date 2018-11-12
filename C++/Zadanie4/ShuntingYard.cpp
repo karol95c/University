@@ -17,15 +17,15 @@ bool ShuntingYard::isOperator(char c) const
 
 bool ShuntingYard::firstCase(char c) const
 {
-    return operators.top() != '^' && operatorPriority[operators.top()] >= operatorPriority[c];
+    return  not rightAssociative[operators.top()] && operatorPriority[operators.top()] >= operatorPriority[c];
 }
 
 bool ShuntingYard::secondCase(char c) const
 {
-    return operators.top() == '^' && operatorPriority[operators.top()] > operatorPriority[c];
+    return rightAssociative[operators.top()] && operatorPriority[operators.top()] > operatorPriority[c];
 }
 
-void ShuntingYard::addToQueue(std::string str)
+void ShuntingYard::addToQueue(std::string& str)
 {
     input = std::queue<char>();
     for (char c : str)
@@ -34,7 +34,7 @@ void ShuntingYard::addToQueue(std::string str)
     }
 }
 
-void ShuntingYard::toONP(std::string expression)
+void ShuntingYard::toONP(std::string& expression)
 {
     std::string result = "";
     addToQueue(expression);
@@ -105,6 +105,15 @@ std::map<char, int> ShuntingYard::operatorPriority = {
     {'/', 2},
     {'%', 2},
     {'^', 3}
+};
+
+std::map<char, bool> ShuntingYard::rightAssociative = {
+    {'+', false},
+    {'-', false},
+    {'*', false},
+    {'/', false},
+    {'%', false},
+    {'^', true}
 };
 
 int main()

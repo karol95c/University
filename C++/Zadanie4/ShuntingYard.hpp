@@ -12,13 +12,14 @@ class ShuntingYard
     std::stack<char> operators;
     std::queue<char> output;
     static std::map<char, int> operatorPriority;
-    void addToQueue(std::string);
+    static std::map<char, bool> rightAssociative;
+    void addToQueue(std::string&);
 
     bool isOperator(char) const;
     bool higherOrEqualPriority(char, char) const;
     bool firstCase(char) const;
     bool secondCase(char) const;
-    void toONP(std::string);
+    void toONP(std::string&);
 
     public:
     ShuntingYard(std::vector<std::string>& toConv);
