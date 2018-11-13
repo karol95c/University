@@ -9,8 +9,10 @@
 #include <algorithm>
 #include <functional>
 
+typedef std::vector<double>::iterator vectorIterator;
+typedef std::list<std::string>::iterator listIterator;
+typedef std::set<int>::iterator setIterator;
 
-typedef std::pair< std::vector<double>::iterator, std::vector<double>::iterator > pairOfIterators;
 template<class T>
 class Range
 {
@@ -40,29 +42,17 @@ class AddValue
     }
 };
 
-// class AddToSet
-// {
-//     private:
-//     int value;
-
-//     public:
-//     AddValue(int a) : value(a) {}
-//     bool operator()(int& element)
-//     {
-//         element += value;
-//     }
-// };
 
 class MinMaxVector
 {
     private:
-    std::pair< std::vector<double>::iterator, std::vector<double>::iterator > minmax;
+    std::pair< vectorIterator, vectorIterator > minmax;
     int i = 0;
     int j = 0;
 
     public:
-    MinMaxVector(std::vector<double>::iterator a, int it = 0) : minmax(a,a) {};
-    std::pair< std::vector<double>::iterator, std::vector<double>::iterator > operator()(std::pair< std::vector<double>::iterator, std::vector<double>::iterator > m, double element)
+    MinMaxVector(vectorIterator a, int it = 0) : minmax(a,a) {};
+    std::pair< vectorIterator, vectorIterator > operator()(std::pair< vectorIterator, vectorIterator > m, double element)
     {
         if (element < *minmax.first)
         {
@@ -88,13 +78,13 @@ class MinMaxVector
 class MinMaxSet
 {
     private:
-    std::pair< std::set<int>::iterator, std::set<int>::iterator > minmax;
+    std::pair< setIterator, setIterator > minmax;
     int i = 0;
     int j = 0;
 
     public:
-    MinMaxSet(std::set<int>::iterator a, int it = 0) : minmax(a,a) {};
-    std::pair< std::set<int>::iterator, std::set<int>::iterator > operator()(std::pair< std::set<int>::iterator, std::set<int>::iterator > m, int element)
+    MinMaxSet(setIterator a, int it = 0) : minmax(a,a) {};
+    std::pair< setIterator, setIterator > operator()(std::pair< setIterator, setIterator > m, int element)
     {
         if (element < *minmax.first)
         {
@@ -120,13 +110,13 @@ class MinMaxSet
 class MinMaxList
 {
     private:
-    std::pair< std::list<std::string>::iterator, std::list<std::string>::iterator > minmax;
+    std::pair< listIterator, listIterator > minmax;
     int i = 0;
     int j = 0;
 
     public:
-    MinMaxList(std::list<std::string>::iterator a, int it = 0) : minmax(a,a) {};
-    std::pair< std::list<std::string>::iterator, std::list<std::string>::iterator > operator()(std::pair< std::list<std::string>::iterator, std::list<std::string>::iterator > m, std::string element)
+    MinMaxList(listIterator a, int it = 0) : minmax(a,a) {};
+    std::pair< listIterator, listIterator > operator()(std::pair< listIterator, listIterator > m, std::string element)
     {
         if (element < *minmax.first)
         {
@@ -177,7 +167,7 @@ void printAddValue(std::vector<double>& V, std::list<std::string>& L, std::set<i
 {
     std::cout << "Dodaj wartosc do każdego elementu kontenera: " << std::endl;
     std::for_each(V.begin(), V.end(), AddValue<double>(10.0));
-    // std::transform(V.begin(), V.end(), V.begin(), std::bind2nd(std::plus<double>(), 1000.0));//AddValue<double>(4.2));
+    // std::transform(V.begin(), V.end(), V.begin(), std::bind2nd(std::plus<double>(), 1000.0));
     for (auto v : V) std::cout << v << " " ;
     std::cout << std::endl;
     std::for_each(L.begin(), L.end(), AddValue<std::string>("ABC"));
@@ -195,18 +185,50 @@ void printAverage(std::vector<double>& V, std::list<std::string>& L, std::set<in
 void printMinMax(std::vector<double>& V, std::list<std::string>& L, std::set<int>& S)
 {
     std::cout << "Wypisz min i max wartość elementów: " << std::endl;
-    auto resultVector = std::accumulate(V.begin(), V.end(), std::pair< std::vector<double>::iterator, std::vector<double>::iterator >(),
+    auto resultVector = std::accumulate(V.begin(), V.end(), std::pair< vectorIterator, vectorIterator >(),
         MinMaxVector(V.begin()));
     std::cout << *resultVector.first << std::endl;
     std::cout << *resultVector.second << std::endl;
-    auto resultSet = std::accumulate(S.begin(), S.end(), std::pair< std::set<int>::iterator, std::set<int>::iterator >(),
+    auto resultSet = std::accumulate(S.begin(), S.end(), std::pair< setIterator, setIterator >(),
         MinMaxSet(S.begin()));
     std::cout << *resultSet.first << std::endl;
     std::cout << *resultSet.second << std::endl;
-    auto resultList = std::accumulate(L.begin(), L.end(), std::pair< std::list<std::string>::iterator, std::list<std::string>::iterator >(),
+    auto resultList = std::accumulate(L.begin(), L.end(), std::pair< listIterator, listIterator >(),
         MinMaxList(L.begin()));
     std::cout << *resultList.first << std::endl;
     std::cout << *resultList.second << std::endl;
+}
+
+void printMyIdeas(std::vector<double>& V, std::list<std::string>& L, std::set<int>& S)
+{
+    std::ostream_iterator<double> out_double(std::cout,", ");
+    std::ostream_iterator<std::string> out_string (std::cout,", ");
+    std::ostream_iterator<int> out_int (std::cout,", ");
+    std::cout << "Suma cyfr jest parzysta: " << std::endl;
+    std::copy_if(V.begin(), V.end(), out_double, [](double element)
+        {
+            int sum = 0;
+            while (element > 0)
+            {
+                sum += element / 10;
+                element /= 10.0;
+            }
+            return sum % 2;
+        });
+    std::cout << std::endl;
+    std::cout << "Suma cyfr jest nieparzysta: " << std::endl;
+    std::copy_if(S.begin(), S.end(), out_int,
+        [](int element)
+        {
+            int sum = 0;
+            while (element > 0)
+            {
+                sum += element / 10;
+                element /= 10;
+            }
+            return !sum % 2;
+        });
+    std::cout << std::endl;
 }
 
 int main()
@@ -219,4 +241,15 @@ int main()
     printAddValue(V, L, S);
     printAverage(V, L, S);
     printMinMax(V, L, S);
+    printMyIdeas(V, L, S);
+    // auto lambda = [](std::vector<double>& v, int p, int n)
+    //     {
+    //         vectorIterator it = v.begin();
+    //         std::advance(it, p);
+    //         for (it; it != v.end(); std::advance(it, n))
+    //         {
+    //             std::cout << *it << " ";
+    //         }
+    //     };
+    // lambda(V, 4, 2);
 }

@@ -122,6 +122,8 @@ int main()
     testVector.push_back("(2+a)+10/20");
     testVector.push_back("3+4*2/(1-5)^2");
     testVector.push_back("12 + a * (b * c + d / e)");
+    testVector.push_back("123");
+    testVector.push_back("3 + 4 * 2 / ( 1 - 5 ) ^ 2 ^ 3");
     ShuntingYard *testPtr = new ShuntingYard(testVector);
     testPtr->convertToONP();
     delete testPtr;
