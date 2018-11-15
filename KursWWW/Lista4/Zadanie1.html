@@ -1,0 +1,75 @@
+
+
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    
+<html xmlns="http://www.w3.org/1999/xhtml">
+    
+<head>
+    <title>index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" type="text/css" href="style3.css" />
+</head>
+    
+<body>
+    <div id="content"></div>
+
+    <script type="text/javascript">
+
+        
+        function addElement()
+        {
+          var newDiv = document.createElement("div");
+          newDiv.id = "menu";
+          newDiv.innerText = "Dodany za pomocą JS";
+          document.getElementById("content").appendChild(newDiv);
+          
+        }
+        
+        function setBlueBorder()
+        {
+            document.getElementById("menu").style.border = "thick solid blue";
+        }
+
+        function setRedBorder()
+        {
+            document.getElementById("menu").style.border = "thick solid red";
+        }
+
+        function setBlackBorder()
+        {
+            document.getElementById("menu").style.border = "thick solid black";
+        }
+
+        function setBrownBorder()
+        {
+            document.getElementById("menu").style.border = "thick solid brown";
+        }
+
+
+        function addLinks()
+        {
+            var mydiv = document.getElementById("menu");
+
+            var redTag = document.createElement('a');
+            redTag.setAttribute('href', "javascript:setRedBorder();");
+            redTag.innerText = "Czerwony";
+            mydiv.appendChild(redTag);
+
+            var blackTag = document.createElement('a');
+            blackTag.setAttribute('href', "javascript:setBlackBorder();");
+            blackTag.innerText = "Czarny";
+            mydiv.appendChild(blackTag);
+
+
+            var brownTag = document.createElement('a');
+            brownTag.setAttribute('href',"javascript:setBrownBorder();");
+            brownTag.innerText = "Brązowy";
+            mydiv.appendChild(brownTag);
+
+        }
+        </script>
+</body>
+
+
+</html>
