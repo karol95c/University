@@ -1,0 +1,90 @@
+
+
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    
+<html xmlns="http://www.w3.org/1999/xhtml">
+    
+<head>
+    <title>index</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" type="text/css" href="style1.css" />
+    <link href="css/ui-lightness/jquery-ui-1.9.2.custom.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="https://code.jquery.com/ui/1.9.2/jquery-ui.js"></script> 
+    <script>
+    </script>
+</head>
+    
+<body>
+    <div id="content">
+    <img src="imgs1/photo0.jpeg" class="image" alt="photo0">
+    <img src="imgs1/photo1.jpeg" class="image" alt="photo1">
+    <img src="imgs1/photo2.jpeg" class="image" alt="photo2">
+    <img src="imgs1/photo4.jpeg" class="image" alt="photo4">
+    <img src="imgs1/photo3.jpeg" class="image" alt="photo3">
+    </div>
+    <div id="slider"></div>
+    <script type="text/javascript">
+        var timer_is_on = 0;
+        
+        $(document).ready( function() {
+            $( "#slider" ).slider(
+                {
+                    orientation: "horizontal",
+                    max: 5,
+                    min: 1,
+                    value: 3,
+                }
+            );
+            startCount();
+            
+        });
+        $( "#slider" ).mouseover(function() {
+            stopCount();
+            });
+        $( "#slider" ).mouseleave(function() {
+
+            startCount();
+    
+        });
+
+        var timeSpeed = 5;
+        var imagesArr = $(".image").toArray();
+        for(var i = 1; i< imagesArr.length; ++i)
+        {
+            $(imagesArr[i]).hide();
+        }
+        var photoNr = 0;
+        var t;
+        // $(imagesArr[0]).hide(1000);
+        // $(imagesArr[++photoNr]).show(1000);
+        function changePhoto()
+        {
+            $(imagesArr[photoNr]).hide(800);
+            photoNr = ((++photoNr) % imagesArr.length);
+            $(imagesArr[photoNr]).show(800);
+        }
+        function timedCount() {
+            t = setInterval(changePhoto, $('#slider').slider("option", "value") * 1000);
+        }
+
+        function startCount() {
+            if (!timer_is_on) {
+                timer_is_on = 1;
+                timedCount();
+            }
+        }
+
+        function stopCount() {
+            clearInterval(t);
+            timer_is_on = 0;
+        }
+        
+    </script>
+</body>
+
+
+</html>
