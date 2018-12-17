@@ -19,12 +19,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4850131874247280}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: BrickSpawn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 8
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!1 &1419576750824038
 GameObject:
@@ -42,12 +42,12 @@ GameObject:
   - component: {fileID: 198480464522524488}
   - component: {fileID: 199549425659415408}
   - component: {fileID: 114507682845281934}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Brick
   m_TagString: Brick
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 8
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &4177894833490998
 Transform:
@@ -56,7 +56,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1419576750824038}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.7038307, y: 0.55, z: 9.07}
+  m_LocalPosition: {x: 6.8749847, y: 0.9747671, z: 7.138757}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4850131874247280}

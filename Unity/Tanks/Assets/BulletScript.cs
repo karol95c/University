@@ -20,17 +20,15 @@ public class BulletScript : MonoBehaviour {
 	void OnCollisionEnter(Collision col)
 	{
 		collisionTag = col.gameObject.tag;
+		if (collisionTag != "Water" || collisionTag != "Ivy")
+		{
+			Destroy(this.gameObject);
+		}
 		if (collisionTag == "Brick")
 		{
-			Destroy(this.gameObject);
+
 			col.gameObject.GetComponent<BrickScript>().Explode();
 			
-
-			// Destroy(col.gameObject);
-		}
-		else if (collisionTag == "Stone")
-		{
-			Destroy(this.gameObject);
 		}
 		else if (collisionTag == "EnemyTank")
 		{
@@ -38,12 +36,16 @@ public class BulletScript : MonoBehaviour {
 			enemyTankScript.Explode();
 			EnemyTankScript.setNextID(enemyTankScript.getID());
 			mapGO.GetComponent<MapScript>().createEnemyTank();
-			Destroy(this.gameObject);
 		}
-		else if(collisionTag == "Tank")
+		else if(collisionTag == "Player")
 		{
-			PlayerTankScript tankScript = col.gameObject.GetComponent<PlayerTankScript>();
-			tankScript.gotHit();
+			col.gameObject.GetComponent<PlayerTankScript>().gotHit() ;
 		}
+		else if (collisionTag == "HeartBase")
+		{
+			Destroy(col.gameObject);
+			GameObject.Find("GameManager").GetComponent<GameManagerSc>().gameOver();
+		}
+		
 	}
 }
