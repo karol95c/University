@@ -20,9 +20,9 @@ GameObject:
   m_Component:
   - component: {fileID: 4360795082931462}
   - component: {fileID: 208201748788444358}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Water
-  m_TagString: Untagged
+  m_TagString: Water
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38,9 +38,9 @@ GameObject:
   - component: {fileID: 33768965954685554}
   - component: {fileID: 23022513765329404}
   - component: {fileID: 65081012603355172}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: WaterB
-  m_TagString: Untagged
+  m_TagString: Water
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -52,7 +52,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1776613741773680}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.495, z: 0}
+  m_LocalPosition: {x: 0, y: -0.5, z: 0}
   m_LocalScale: {x: 1, y: 0.01, z: 1}
   m_Children: []
   m_Father: {fileID: 4360795082931462}
@@ -65,7 +65,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1703770855457054}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.388296, y: 0.89101875, z: 9.799308}
+  m_LocalPosition: {x: 10.197124, y: 0.9697194, z: 2.411665}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 4042972239324232}
@@ -124,8 +124,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 25.77, z: 1}
-  m_Center: {x: 0, y: 12.9, z: 0}
+  m_Size: {x: 1, y: 11.61, z: 1}
+  m_Center: {x: 0, y: 7.6, z: 0}
 --- !u!208 &208201748788444358
 NavMeshObstacle:
   m_ObjectHideFlags: 1
@@ -135,9 +135,9 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 0.5, y: 0.5, z: 0.5}
+  m_Extents: {x: 0.5, y: 0.15, z: 0.5}
   m_MoveThreshold: 0.1
   m_Carve: 0
   m_CarveOnlyStationary: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 0, y: -0.48, z: 0}
   m_TimeToStationary: 0.5

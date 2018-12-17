@@ -6,19 +6,22 @@ public class TankScript : MonoBehaviour {
 
 	// Use this for initialization
 	protected float rcsThrust = 90f;
-	protected float mainThrust = 250f;
+	protected float mainThrust = 100f;
 	protected Rigidbody rigidBody;
 	protected AudioSource[] tankAudio;
     public GameObject bulletPrefab;
 	public Transform bulletSpawn;
 	protected bool ammoReloaded;
 	protected int ammo;
+	protected bool nightModeOn;
+
+	protected Light torch;
+	protected GameManagerSc gm;
+	
 	
 	void Start () {
-		rigidBody = GetComponent<Rigidbody>();
-		tankAudio = GetComponents<AudioSource>();
-		ammo = 1000;
-		ammoReloaded = true;
+
+
 	}
 	
 	// Update is called once per frame

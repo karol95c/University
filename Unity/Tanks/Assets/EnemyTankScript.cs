@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using System;
+using UnityEngine.SceneManagement;
 
 public class EnemyTankScript : TankScript {
 
@@ -11,8 +12,9 @@ public class EnemyTankScript : TankScript {
 	public GameObject enemyExplodePrefab;
 	public Transform enemyExplodeSpawn;
 	static GameObject mapGO;
+	static GameObject tankGO;
 	private static int nextID = 0;
-	private static int lives = 9;
+	private static int lives = 7;
 	private int enemyID;
 
 	private bool rotationInProgress = false;
@@ -34,12 +36,15 @@ public class EnemyTankScript : TankScript {
 	float distanceBasedSpeedModifier;
 	Vector3 movement;
 	string debug;
+	int r;
+
 
 
 	void Start () {
 		rigidBody = GetComponent<Rigidbody>();
 		tankAudio = GetComponents<AudioSource>();
 		mapGO = GameObject.Find("Map");
+		tankGO = GameObject.Find("Tank");
 		thisTransform = GetComponent<Transform>();
 		setEnemyResp();
 
@@ -51,30 +56,52 @@ public class EnemyTankScript : TankScript {
 		ammo = 100;
 		ammoReloaded = true;
 		agent = GetComponent<NavMeshAgent>();
+		r = getrandom.Next(6);
 		setTarget();
+		mainThrust = 80f;
+		torch = transform.Find("Light").GetComponent<Light>();
+		nightModeOn = MapScript.isNightModeOn();
+		torchManage();
+		gm = GameObject.Find("GameManager").GetComponent<GameManagerSc>();
 
 	}
 	// Update is called once per frame
+
+	public static void restartLives()
+	{
+		EnemyTankScript.lives = 7;
+	}
 	void Update () {
 		// rotateEnemy(90);
 		direction = transform.TransformDirection(target);
 		distance = Vector3.Distance(target, transform.position);
-		if(ammoReloaded) StartCoroutine(Wait(2f));
-		if (distance > 5f)
+		if(ammoReloaded) StartCoroutine(Wait((UnityEngine.Random.value * 2.0f) + 2f));
+		if (distance > 6f)
 		{
 			// agent.isStopped = true;
 			// LookToward(destination, distance);
 			// distanceBasedSpeedModifier = GetSpeedModifier(distance);
 			
-			movement = transform.forward * Time.deltaTime * 0.05f;
+			movement = transform.forward * Time.deltaTime * 0.03f;
 			agent.Move(movement);
 		}
 		agent.SetDestination(target);
 		
 	}
-	
+	private void torchManage()
+	{
+		if (!nightModeOn)
+		{
+			torch.enabled = false;
+		}
+	}
+	public static int getLives()
+	{
+		return lives;
+	}	
 	void setTarget()
 	{
+
 		target = mapGO.GetComponent<MapScript>().basePosition;
 	}
 	public void moveToPoint(Vector3 destination)
@@ -86,52 +113,7 @@ public class EnemyTankScript : TankScript {
 
 		// agent.SetDestination(target);
 	}
-	// private void rotateEnemy()
-	// {
-	// 	if (rotationInProgress && !moveInProgress)
-	// 	{
-	// 		if (Math.Abs(transform.rotation.y - targetRotation.y) < 0.000005f)
-	// 		{
-	// 			rotationInProgress = false;
-	// 			moveInProgress = false;
-	// 		}
-	// 		else 
-	// 		{
-	// 			transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 20 * Time.deltaTime);
-	// 		}
-	// 	}
-	// 	else 
-	// 	{
-	// 		// targetRotation = Quaternion.Euler(0f, transform.rotation.y + rotate, 0f);
-	// 		rotationInProgress = true;
-	// 		moveInProgress = false;
-	// 	}
-	// }
 
-	// private void moveForward()
-	// {
-
-	// 	if (!rotationInProgress && moveInProgress)
-	// 	{
-	// 		if (Math.Abs(transform.position.z - targetPosition.z) < 0.00005f || Math.Abs(transform.position.x - targetPosition.x) < 0.00005f)
-	// 		{
-	// 			rotationInProgress = false;
-	// 			moveInProgress = false;
-	// 		}
-	// 		else 
-	// 		{
-	// 			transform.position = Vector3.MoveTowards(transform.position, targetPosition, 1 * Time.deltaTime);
-	// 		}
-	// 	}
-	// 	else 
-	// 	{
-	// 		targetPosition = moveDirection();
-	// 		rotationInProgress = false;
-	// 		moveInProgress = true;
-	// 	}
-		
-		
-	// }
 	public static void setNextID(int id)
 	{
 		nextID = id;
@@ -142,6 +124,7 @@ public class EnemyTankScript : TankScript {
 	}
 	public void Explode()
 	{
+		gm.enemyDestroyed();
 		var enemyExplode = (GameObject)Instantiate (
 			enemyExplodePrefab,
 			enemyExplodeSpawn.position,
@@ -183,40 +166,6 @@ public class EnemyTankScript : TankScript {
     }
 
 
-	// Vector3 moveDirection()
-	// {
-	// 	float rotation = thisTransform.rotation.y;
-	// 	float x;
-	// 	float z;
-	// 	if ( Math.Abs(rotation - 90f) < 1f)
-	// 	{
-	// 		// return new Vector3(-1f, 0f, 0f);
-	// 		x = -1f;
-	// 		z = 0f;
-	// 	}
-	// 	else if(Math.Abs(rotation) < 1f)
-	// 	{
-	// 		// transform.rotation = Quaternion.Euler(thisTransform.rotation.x, 0f, thisTransform.rotation.z);
-	// 		// return new Vector3(0f, 0f, -1f);
-	// 		x = 0f;
-	// 		z = -1f;
-	// 	}
-	// 	else if( Math.Abs(rotation - 270f) < 1f)
-	// 	{
-	// 		// transform.rotation = Quaternion.Euler(thisTransform.rotation.x, 270f, thisTransform.rotation.z);
-	// 		x = -1f;
-	// 		z = 0f;
-	// 		// return new Vector3(-1f, 0f, 0f);
-	// 	}
-	// 	else
-	// 	{
-	// 		// transform.rotation = Quaternion.Euler(thisTransform.rotation.x, 180f, thisTransform.rotation.z);
-	// 		x = 0f;
-	// 		z = 1f;
-	// 		// return new Vector3(0f, 0f, 1f);
-	// 	}
-	// 	return new Vector3(transform.position.x + x, transform.position.y, transform.position.z + z);
-	// }
 
 	void OnCollisionEnter(Collision col)
 	{

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using UnityEngine.AI;
+using UnityEngine.SceneManagement;
 
 
 public class MapScript : MonoBehaviour {
@@ -26,6 +27,7 @@ public class MapScript : MonoBehaviour {
 
 		// enemyScript\
 		mapElements = new string[size, size];
+		EnemyTankScript.restartLives();
 		generateMap();
 		setNavMeshSize();
 		surface.BuildNavMesh();
@@ -52,11 +54,14 @@ public class MapScript : MonoBehaviour {
 	}
 	private void generateMap()
 	{
-		createStandards();
 		createBase();
 		createBorders();
 	}
 	
+	public static bool isNightModeOn()
+	{
+		 return SceneManager.GetActiveScene().name  == "NightMode";
+	}
 	private void createBase()
 	{
 		
@@ -66,6 +71,7 @@ public class MapScript : MonoBehaviour {
 		Vector3 wektor = new Vector3(center + 2f, 0, 4f);
 		mapElements[0, center + 2] = "Tank";
 		Instantiate(Resources.Load("Tank"),  new Vector3(center + 2, 0.5f, 1), Quaternion.Euler(0f, 180f, 0f));
+		createStandards();
 		createSpaceForPlayer(center + 2);
 		createSpaceForPlayer(center - 4);
 		createSingle(1, center + 2, "Empty");
@@ -81,6 +87,10 @@ public class MapScript : MonoBehaviour {
 		createSingle(2, center + 2, "Empty");
 		createSingle(0, center - 1, "Stone");
 		createSingle(0, center + 1, "Stone");
+		if (MapScript.isNightModeOn())
+		{
+			createBaseLamps();
+		}
 		createHeartBase();
 
 
@@ -140,7 +150,7 @@ public class MapScript : MonoBehaviour {
 	}
 	void createHeartBase()
 	{
-		GameObject g = Instantiate(Resources.Load("HeartBase"),  new Vector3(center, 0.0f, 0f), Quaternion.identity) as GameObject;
+		GameObject g = Instantiate(Resources.Load("HeartBase"),  new Vector3(center, -0.5f, 0f), Quaternion.identity) as GameObject;
 		mapElements[0, center] = "HeartBase";
 		basePosition = g.transform.position;
 	}
@@ -184,7 +194,8 @@ public class MapScript : MonoBehaviour {
 	{
 		if (j < size &&  i < size && mapElements[i, j] == null)
 		{
-			Instantiate(Resources.Load("EnemyTank"),  new Vector3(j, 0.5f, i), Quaternion.identity);
+			Instantiate(Resources.Load("EnemyTank"),  new Vector3(j, 0.5f, i),
+				Quaternion.Euler(0f, 180f, 0f));
 			mapElements[i, j] = "EnemyTank";
 		}
 	}
@@ -196,7 +207,10 @@ public class MapScript : MonoBehaviour {
 		if (position != null)
 		{
 			StartCoroutine(Wait(3f, position.GetValueOrDefault()));
-
+		}
+		else if (EnemyTankScript.getLives() < -1)
+		{
+			GameObject.Find("GameManager").GetComponent<GameManagerSc>().gameWon();
 		}
 	}
 
@@ -206,7 +220,7 @@ public class MapScript : MonoBehaviour {
         //This is a coroutine
 		Debug.Log("THIS IS FUCKING WAIT");
         yield return new WaitForSeconds(duration);   //Wait
-		MonoBehaviour.Instantiate(Resources.Load("EnemyTank"),  pos, Quaternion.identity);
+		MonoBehaviour.Instantiate(Resources.Load("EnemyTank"),  pos, Quaternion.Euler(0f, 180f, 0f));
     }
 
 
@@ -250,5 +264,20 @@ public class MapScript : MonoBehaviour {
 		GameObject nav = GameObject.Find("NavMesh");
 		nav.transform.localScale = new Vector3(size, 0f, size);
 	}
+
+	private void createLamp(float x, float z, float rotY)
+	{
+		MonoBehaviour.Instantiate(Resources.Load("BaseLamp"),  new Vector3(x, 0.5f, z), Quaternion.Euler(0f, rotY, 0f));
+	}
+
+	private void createBaseLamps()
+	{
+		createLamp(center, 1.7f, -90f);
+		createLamp(center - 1.7f, 0.5f, 180f);
+		createLamp(center - 1.7f, 1.5f, -135f);
+		createLamp(center + 1.7f, 1.5f, -45f);
+		createLamp(center + 1.7f, 0.5f, 0f);
+	}
+
 }
 

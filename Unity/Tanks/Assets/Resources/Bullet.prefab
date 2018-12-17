@@ -21,12 +21,13 @@ GameObject:
   - component: {fileID: 4068474631766250}
   - component: {fileID: 33679745621344600}
   - component: {fileID: 23257888671951196}
-  - component: {fileID: 135087735286101276}
   - component: {fileID: 54690085017462854}
   - component: {fileID: 114021154041845370}
+  - component: {fileID: 122275152433380682}
+  - component: {fileID: 65955871446779050}
   m_Layer: 0
   m_Name: Bullet
-  m_TagString: Untagged
+  m_TagString: Bullet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -38,8 +39,8 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1824394055732576}
   m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
-  m_LocalPosition: {x: -0.18795517, y: 2.226115, z: -5.73}
-  m_LocalScale: {x: 0.07, y: 0.07, z: 0.07}
+  m_LocalPosition: {x: 9.969044, y: 0.50969225, z: 6.6532655}
+  m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -101,6 +102,18 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!65 &65955871446779050
+BoxCollider:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1824394055732576}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &114021154041845370
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -112,17 +125,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e425f5c3d59974498fec9928ffbc3ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  brickExplodePrefab: {fileID: 0}
+  brickExplodePrefab: {fileID: 1324763905864000, guid: 1e2e7e57e6fe6274eae25e05fb8408fb,
+    type: 2}
   brickExplodeSpawn: {fileID: 0}
---- !u!135 &135087735286101276
-SphereCollider:
+--- !u!122 &122275152433380682
+Halo:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1824394055732576}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Color:
+    serializedVersion: 2
+    rgba: 4278248191
+  m_Size: 0.15
