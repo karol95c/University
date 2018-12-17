@@ -1,0 +1,5 @@
+Ciasteczka
+mały fragment tekstu - serwer wysyła je do przeglądarki, za każdym razem kiedy odwiedzamy stronę
+Pozwala to utrzymywać sesje, zapamiętywać klienta i informacje na jego temat.
+Ciasteczka mają date wygaśnięcia
+Zabezpieczenia pozwalają na odczytanie cookies tylko z domeny, na które zostały zapisane
