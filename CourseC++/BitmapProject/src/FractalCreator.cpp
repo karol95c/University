@@ -1,7 +1,7 @@
 #include "FractalCreator.h"
 #include "Mandelbrot.h"
 #include <math.h>
-
+#include <assert.h>
 
 namespace cave
 {
@@ -19,10 +19,10 @@ namespace cave
 
     void FractalCreator::run(std::string name)
     {
-        addZoom(Zoom(295, m_height - 202, 0.1));
-        addZoom(Zoom(312, m_height - 304, 0.1));
+
         calculateIteration();
         calculateTotalIterations();
+        calculateRangeTotals();
         drawFractal();
         writeBitmap("test.bmp");
     }
@@ -46,6 +46,22 @@ namespace cave
         }
     }
 
+    void FractalCreator::calculateRangeTotals()
+    {
+        int rangeIndex = 0;
+
+        for (int i = 0; i < Mandelbrot::MAX_ITERATIONS; ++i)
+        {
+            int pixels = m_histogram[i];
+            
+            if (i >= m_ranges[rangeIndex + 1]) rangeIndex++;
+
+            m_rangeTotals[rangeIndex] += pixels;
+        }
+        
+        int overallTotal = 0;
+    }
+
     void FractalCreator::calculateTotalIterations()
     {
         for (int i = 0; i < Mandelbrot::MAX_ITERATIONS; ++i)
@@ -56,26 +72,39 @@ namespace cave
 
 	void FractalCreator::drawFractal()
     {
+        RGB startColor(0, 0, 0);
+        RGB endColor(0, 0, 255);
+        RGB diffColor = endColor - startColor;
         for(int y = 0; y < m_height; ++y)
         {
             for (int x = 0; x < m_width; ++x)
             {
+
+                int iterations = m_fractal[y * m_width + x];
+                int range = getRange(iterations);
+                int rangeTotal = m_rangeTotals[range];
+                int rangeStart = m_ranges[range];
+
+                RGB& startColor = m_colors[range];
+                RGB& endColor = m_colors[range + 1];
+                RGB diffColor = endColor - startColor;
+
                 std::uint8_t red = 0;
                 std::uint8_t green = 0;
                 std::uint8_t blue = 0;
-
-                int iterations = m_fractal[y * m_width + x];
                 
                 if (iterations != Mandelbrot::MAX_ITERATIONS)
                 {
-                    double hue = 0.0;
+                    int totalPixels = 0;
                     
                     for (int i = 0; i <= iterations; ++i)
                     {
-                        hue += (double)m_histogram[i] / m_total;
+                        totalPixels += (double)m_histogram[i];
                     }
 
-                    green = pow(255, hue);
+                    red = startColor.r + diffColor.r * (double)totalPixels/rangeTotal;
+                    green = startColor.g + diffColor.g * (double)totalPixels/rangeTotal;
+                    blue = startColor.b + diffColor.b * (double)totalPixels/rangeTotal;
                 }
 
                 
@@ -86,6 +115,40 @@ namespace cave
                 // if (color > max) max = color;
             }
         }
+    }
+    void FractalCreator::addRange(double endRange, const RGB& rgb)
+    {
+        m_ranges.push_back(endRange * Mandelbrot::MAX_ITERATIONS);
+        m_colors.push_back(rgb);
+
+        if(m_gotFirstRange)
+        {
+            m_rangeTotals.push_back(0);
+        }
+        m_gotFirstRange = true;
+
+    }
+
+    int FractalCreator::getRange(int iterations)const
+    {
+        int range = 0;
+
+        for(int i=1; i < m_ranges.size(); i++) {
+
+            range = i;
+
+            if(m_ranges[i] > iterations) {
+                break;
+            }
+
+        }
+
+        range--;
+
+        assert(range > -1);
+        assert(range < m_ranges.size());
+
+        return range;
     }
 
     void FractalCreator::addZoom(const Zoom& zoom)

@@ -10,7 +10,7 @@ namespace cave
         zooms.push_back(z);
 
         m_xCenter += (z.x - m_width/2) * m_scale;
-        m_yCenter += (z.y - m_height/2) * m_scale;
+        m_yCenter += -(z.y - m_height/2) * m_scale;
         
         m_scale *= z.scale;
     }
