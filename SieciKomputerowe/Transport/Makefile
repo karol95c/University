@@ -1,11 +1,11 @@
 
 CC = g++ 
-CXXFLAGS = -g -Wall -Wextra 
+CXXFLAGS = -Wall -Wextra 
 
-TEST_SIZE = 1000000
+TEST_SIZE = 9027928
 
 transport: main.o transport.o
-	$(CC) -std=c++11 $(CXXFLAGS) -DDEBUG -o transport main.o transport.o
+	$(CC) -std=c++11 $(CXXFLAGS) -o transport main.o transport.o
 
 main.o: main.cpp
 

@@ -1,30 +1,23 @@
 #include "transport.h"
 
-
-const int MIN_PORT = 0;
-const int MAX_PORT = 65535 + 1;
-
-const int DATAGRAM_SIZE = 1000;
-const int WINDOW_SIZE = 2500;
-
+const int DATA_SIZE = 1000;
+const int WINDOW_SIZE = 1000;
+const int TIMEXP = 500000;
 const char* DESTINATION = "156.17.4.30";
-const int TIME_TO_WAIT = 500000;
 
-Transporter::Transporter(int p, FILE *f, int s) : port(p), size(s), current(0), last(-1)
+Transporter::Transporter(int p, FILE *f, int s) : port(p), size(s), current(-1), last(-1)
 {
     file = f;
-    count = ceil (static_cast<double>(size) / static_cast<double>(DATAGRAM_SIZE));
+    count = ceil (static_cast<double>(size) / static_cast<double>(DATA_SIZE));
 
-    dataVec.reserve(WINDOW_SIZE);
     for (int i = 0; i < WINDOW_SIZE; i++)
     {
-        dataVec[i] = new uint8_t[DATAGRAM_SIZE];
-        //dataVec[i] = (u_int8_t *) malloc(sizeof(u_int8_t) * DATAGRAM_SIZE);
+        dataVec.push_back(new uint8_t[DATA_SIZE]);
 	}
 
     for (int i = 0; i < count; i++)
     {
-        dataInfo.push_back(std::make_pair(TIME_TO_WAIT, 0));
+        dataInfo.push_back(std::move(std::make_pair(TIMEXP, 0)));
     }
 }
 
@@ -33,14 +26,13 @@ Transporter::~Transporter()
     for (int i = 0; i < WINDOW_SIZE; i++)
     {
         delete[] dataVec[i];
-        //free(dataVec[i]);
 	}
+
     close(sockfd);
 }
 
 bool Transporter::PrepareSocket()
 {
-    std::cout << "PrepareSocket()"<< std::endl;
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sockfd < 0) return false;
 
@@ -54,59 +46,55 @@ bool Transporter::PrepareSocket()
 	return true;
 }
 
-bool Transporter::Process()
+void Transporter::Process()
 {
-    std::cout << "Process()"<< std::endl;
-    if (!PrepareSocket()) return false;
-
-    std::cout << "last: " << last << std::endl;
-    std::cout << "count: " << count << std::endl;
+    if (!PrepareSocket())   return;
 
     while(last != count - 1)
     {
-        std::cout << "loop"<< std::endl;
-        if (!SendData()) return false;
+        if (!SendData())    return;
 
-        if (!GetData()) return false;
+        if (!GetData())     return;
     }
-    return true;
 }
 
 bool Transporter::IsLast()
 {
-    std::cout << "IsLast()"<< std::endl;
-    return current + 1 == count;
+    return (current + 1) == count;
 }
 
 bool Transporter::Send()
 {
-    std::cout << "Send()"<< std::endl;
-    char get[25];
-    int start = current * DATAGRAM_SIZE;
+    int bytesToSend = 0;
+    int start = current * DATA_SIZE;
+
     if (IsLast())
     {
-        //int bytesLeft = size - current * DATAGRAM_SIZE;
-        sprintf(get, "GET %d %d\n", start, (size - current * DATAGRAM_SIZE));
+        bytesToSend = size - current * DATA_SIZE;
     }
     else
     {
-        sprintf(get, "GET %d %d\n", start, DATAGRAM_SIZE);
+        bytesToSend = DATA_SIZE;
     }
 
-    int getLenght = strlen(get);
-    if (sendto(sockfd, get, getLenght, 0, (struct sockaddr*) &sockAddr, sizeof(sockAddr)) == getLenght)
+    std::string message = "GET " + std::to_string(start) + ' ' + std::to_string(bytesToSend) + '\n';
+    int messageLength = message.length();
+
+    if (sendto(sockfd, message.c_str(), messageLength, 0, (struct sockaddr*) &sockAddr, sizeof(sockAddr)) == messageLength)
     {
         return true;
     }
-    return false;
 
+    return false;
 }
 
 bool Transporter::SendData()
 {
-    std::cout << "SendData()"<< std::endl;
-    int a = last >= 0 ? last + 1 : 0;
-    for (int i = a; i < a + WINDOW_SIZE && i < count; i++)
+    int j;
+    if (last == 0) j = 0;
+    else j = last + 1;
+
+    for (int i = j; i < j + WINDOW_SIZE && i < count; i++)
     {
         current = i;
         if (!dataInfo[i].second)
@@ -118,28 +106,28 @@ bool Transporter::SendData()
                     if (!Send()) return false;
 
                 }
-			    dataInfo[i].first= TIME_TO_WAIT;
+			    dataInfo[i].first= TIMEXP;
             }
         }
     }
     return true;
 }
+
 void Transporter::UpdateTime(int del)
 {
-    std::cout << "UpdateTime()"<< std::endl;
-    std::cout << "last: "<< last << std::endl;
-    if (last < 0) last = 0;
-    for (int i = last; i < count; i++)
-    if (dataInfo[i].first > 0)
+    int k;
+    if (last < 0) k = 0;
+    else k= last;
+
+    for (; k < count; k++)
+    if (dataInfo[k].first > 0)
     {
-        dataInfo[i].first -= del;
+        dataInfo[k].first -= del;
     }
 }
 
-
 bool Transporter::RefreshWindow()
 {
-    std::cout << "RefreshWindow()"<< std::endl;
     for (int i = last + 1; i < count; i++)
     {
         if(!dataInfo[i].second) break;
@@ -148,17 +136,10 @@ bool Transporter::RefreshWindow()
         int l;
 
         current = i;
-        if (IsLast())
-        {
-            l = size - i * DATAGRAM_SIZE;
-        }
-        else
-        {
-            l = DATAGRAM_SIZE;
-        }
+        if (IsLast())   l = size - i * DATA_SIZE;
+        else            l = DATA_SIZE;
 
         if (fwrite(dataVec[i % WINDOW_SIZE], sizeof(uint8_t), l, file) < 1) return false;
-
     }
 
     return true;
@@ -166,12 +147,11 @@ bool Transporter::RefreshWindow()
 
 bool Transporter::Get(uint8_t *buff)
 {
-    std::cout << "Get()"<< std::endl;
     int i, len;
 
     if (sscanf((char *) buff, "DATA %d %d\n", &i, &len) != 2) return false;
 
-    i /= DATAGRAM_SIZE;
+    i /= DATA_SIZE;
 
     if (!dataInfo[i].second)
     {
@@ -183,36 +163,27 @@ bool Transporter::Get(uint8_t *buff)
 
 bool Transporter::GetData()
 {
-    std::cout << "GetData()"<< std::endl;
     fd_set descriptors;
-
-	struct timeval tv;
-	timerclear(&tv);
-	//tv.tv_sec = TIME_TO_WAIT / 1000000;
-    tv.tv_sec = 1;
-	tv.tv_usec = TIME_TO_WAIT % 1000000;
+    std::chrono::duration<int, std::micro> duration_time = std::chrono::duration<int, std::micro>();    
+	timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = 500000;
     FD_ZERO (&descriptors);
 	FD_SET (sockfd, &descriptors);
-    struct timeval before;
 
-    gettimeofday(&before, NULL);
+    auto start = std::chrono::high_resolution_clock::now();
 
     int sel = select(sockfd + 1, &descriptors, NULL, NULL, &tv);
 
-    if (sel == -1) return false;
+    if (sel == -1)  return false;
 
-    gettimeofday(&tv, NULL);
+    auto end = std::chrono::high_resolution_clock::now();
+    
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    UpdateTime(elapsed.count());
 
-    int delta = 1000000 * (tv.tv_sec - before.tv_sec) + (tv.tv_usec - before.tv_usec);
-
-    UpdateTime(delta);
-    std::cout << "Break" << std::endl;
-    if (sel == 0)
-    {
-        std::cout << "Break" << std::endl;
-        return true;
-    }
-    std::cout << "Break" << std::endl;
+    if (sel == 0)   return true;
+    
     for (int i = 0; i < sel; i++)
     {
         sockaddr_in sender;
@@ -221,7 +192,7 @@ bool Transporter::GetData()
 
         int dataSize = recvfrom(sockfd, buffer, IP_MAXPACKET, 0, (struct sockaddr*)&sender, &length);
 
-        if (dataSize < 0) return false;
+        if (dataSize < 0)   return false;
 
         char sendIP[20];
 
@@ -233,7 +204,5 @@ bool Transporter::GetData()
         }
     }
 
-    
     return RefreshWindow();
-
 }

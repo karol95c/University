@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
 
     std::unique_ptr<Transporter> t = std::make_unique<Transporter>(port, file, size);
 
-
     t->Process();
     
     fclose(file);
