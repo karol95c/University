@@ -1,5 +1,6 @@
 CREATE USER app ENCRYPTED PASSWORD 'qwerty';
 
+
 CREATE SEQUENCE idseq START 1;
 
 CREATE TABLE dataid(
@@ -38,7 +39,7 @@ CREATE TABLE actions(
     projectid NUMERIC NOT NULL,
     authorityid NUMERIC NOT NULL,
     support BOOLEAN NOT NULL,
-    memberid NUMERIC PRIMARY KEY,
+    memberid NUMERIC NOT NULL,
     CONSTRAINT actions_action_dataid_fkey FOREIGN KEY (action)
       REFERENCES dataid (id),
     CONSTRAINT actions_action_projects_fkey FOREIGN KEY (projectid)
@@ -59,3 +60,10 @@ CREATE TABLE votes(
     CONSTRAINT votes_actionid_politician_fkey FOREIGN KEY (memberid)
       REFERENCES politician (member)
 );
+
+GRANT SELECT, INSERT, UPDATE ON politician TO app;
+GRANT SELECT, INSERT, UPDATE ON votes TO app;
+GRANT SELECT, INSERT, UPDATE ON actions TO app;
+GRANT SELECT, INSERT, UPDATE ON projects TO app;
+GRANT SELECT, INSERT, UPDATE ON dataid TO app;
+GRANT SELECT, INSERT, UPDATE ON authorities TO app;

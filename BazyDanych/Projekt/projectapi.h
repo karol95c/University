@@ -24,13 +24,13 @@ class ProjectAPI
 
     private:
 
-    bool addToDataID(int id);
+    bool addToDataID(int id, pqxx::work& W);
     bool checkCorrectness(json& js, bool leader, bool add);
-    void updateTimestamp(json& js);
+    void updateTimestamp(json& j, pqxx::work& W);
     void showSuccessStatus();
     void showErrorStatus();
     bool addUser(json& js);
-    void leader(json& js);
+    bool leader(json& js);
     bool support(json& js, bool support);
     bool upvote(json& js, bool upvote);
     bool votes(json& js);

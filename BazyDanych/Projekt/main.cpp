@@ -31,7 +31,6 @@ bool checkCredentials(std::string login, std::string& userName, std::string& use
 bool handleFirstJson(json& firstJson, const int idx, std::string& dbName, std::string& userName, std::string& userPassword)
 {
     std::string firstJsonStr = firstJson.dump();
-    std::cout << firstJsonStr << std::endl;
     std::cout << firstJson["open"] << std::endl;
     if (firstJson["open"] != nullptr)
     {
@@ -83,10 +82,6 @@ int main(int argc, char *argv[])
             std::getline(inputFile, inputLine);
             jsonVec.push_back(std::move(json::parse(inputLine)));
         }
-        for (auto x: jsonVec)
-        {
-            std::cout << x << std::endl;
-        }
 
     }
     inputFile.close();
@@ -96,12 +91,10 @@ int main(int argc, char *argv[])
         try {
             std::string connectStr = "dbname = " + dbName + " user = " + userName + " password = " + userPassword+ " \
                 hostaddr = 127.0.0.1";
-            std::cout << connectStr << std::endl;
             pqxx::connection C(connectStr);
 
             if (C.is_open())
-            {
-                std::cout << "Opened database successfully: " << C.dbname() << std::endl;
+            {   
                 ProjectAPI* papi = new ProjectAPI(jsonVec, C, initIdx);
                 papi->process();
                 delete papi;
@@ -119,64 +112,5 @@ int main(int argc, char *argv[])
 
     }
 
-    std::vector<int> c_vector {1, 2, 3, 4};
-    std::vector<int> a_vec {1, 2, 3, 4};
-    std::vector<std::vector<int>> vec;
-    vec.push_back(c_vector);
-    vec.push_back(a_vec);
-    json a;
-    json j(vec);
-    a["status"] = "OK";
-    a["data"] = j;
-    std::cout << j << std::endl;
-
-
-   // else
-   // {
-   //    createAppUser();
-   // }
-//   try {
-//       char* sql;
-//       char* insert;
-//       pqxx::connection C("dbname = projectdb user = init password = qwerty \
-//       hostaddr = 127.0.0.1");
-//       if (C.is_open()) {
-//          std::cout << "Opened database successfully: " << C.dbname() << std::endl;
-//       } else {
-//          std::cout << "Can't open database" << std::endl;
-//          return 1;
-//       }
-//       /* Create SQL statement */
-//       sql = "SELECT * FROM dataid;";
-
-//       /* Create a transactional object. */
-//       pqxx::work W(C);
-//       insert = "INSERT INTO dataid VALUES (100011);";
-
-//       /* Create a transactional object. */
-      
-//       /* Execute SQL query */
-//       W.exec(insert);
-//       W.commit();
-//       std::cout << "Table dataid insert successfully" << std::endl;
-//       pqxx::nontransaction N(C);
-
-//       /* Execute SQL query */
-      
-//       /* Execute SQL query */
-//       pqxx::result R( N.exec( sql ));
-      
-//       /* List down all the records */
-//       for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c) {
-//          std::cout << "ID = " << c[0].as<int>() << std::endl;
-//       }
-//       std::cout << "Table read successfully" << std::endl;
-
-//       C.disconnect ();
-//    } catch (const std::exception &e) {
-//       std::cerr << e.what() << std::endl;
-//       return 1;
-//    }  
-//   std::cout << "DZIALA?" << std::endl;
   return 0;
 }
