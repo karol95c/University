@@ -69,7 +69,7 @@ bool ProjectAPI::process()
             }
             status = leader(js["leader"]);
         }
-        else if (js["trolls"] != nullptr)   status = trolls(js);
+        else if (js["trolls"] != nullptr)   status = trolls(js["trolls"]);
         else if (js["protest"] != nullptr) status = support(js["protest"], false);
         else if (js["support"] != nullptr)  status = support(js["support"], true);
         else if (js["upvote"] != nullptr)   status = upvote(js["upvote"], true);
@@ -94,7 +94,7 @@ bool ProjectAPI::checkCorrectness(json& js, bool leader, bool add)
     pqxx::nontransaction N(connect);
     std::string pass = js["password"].dump();
     std::replace(pass.begin(), pass.end(), '"', '\'');
-    std::string sql = "SELECT leader, last_active FROM politician WHERE member=" + js["member"].dump() + " AND pass=" + pass +";";
+    std::string sql = "SELECT leader, EXTRACT(seconds from last_active) FROM politician WHERE member=" + js["member"].dump() + " AND pass=" + pass +";";
     std::cout << sql << "\n";
     pqxx::result R( N.exec( sql ));
     N.commit();
@@ -123,15 +123,11 @@ bool ProjectAPI::checkCorrectness(json& js, bool leader, bool add)
                  std::cout << "User don't have leader credentials." << "\n"; 
                  return false;
             }
-
-            std::cout << "_____________________________________________\n";
-            std::cout << js["timestamp"] << std::endl;
-                        std::cout << "_____________________________________________\n";
-            // if (js["timestamp"] - 31556926 > row[1].as<int>())
-            // {
-            //     std::cout << "User is frozen." << "\n";
-            //     return false;
-            // }
+            
+            if (static_cast<int>(js["timestamp"]) - 31556926 > row[1].as<int>())
+            {
+                return false;
+            }
         }
     }
     return true;
@@ -483,21 +479,28 @@ bool ProjectAPI::votes(json& js)
 
 bool ProjectAPI::trolls(json& js)
 {
+    std::cout << "trolls" << std::endl;
     try {
         pqxx::nontransaction N(connect);
         std::vector<json> returnVecJson;
-        std::string sql = "SELECT member, last_active, downvotes, upvotes FROM politician WHERE upvotes>downvotes";
-
+        std::string sql = "SELECT member, EXTRACT(seconds from last_active), downvotes, upvotes FROM politician;";
+        std::cout << sql << std::endl;
         pqxx::result R( N.exec( sql ));
  
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
         {
+            std::cout << js << std::endl;
+            std::cout << js["timestamp"] << std::endl;
+            std::cout << c[1].as<int>() << std::endl;
+            
             if (static_cast<int>(js["timestamp"]) - 31556926 > c[1].as<int>())
             {
+                std::cout << "IF " << std::endl;
                 returnVecJson.push_back({c[0].as<int>(), c[2].as<int>(), c[3].as<int>(), "false"});
             }
             else
             {
+                std::cout << "ELse" << std::endl;
                 returnVecJson.push_back({c[0].as<int>(), c[2].as<int>(), c[3].as<int>(), "true"});
             }
         }
