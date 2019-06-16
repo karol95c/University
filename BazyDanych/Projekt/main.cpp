@@ -2,7 +2,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include "projectapi.h"
-
+#include <string>
 // for convenience
 using json = nlohmann::json;
 
@@ -51,20 +51,59 @@ bool handleFirstJson(json& firstJson, const int idx, std::string& dbName, std::s
     }
 }
 
-bool checkIfInitSuccess()
+
+bool prepareDataBase(char* fileName, pqxx::connection& C)
 {
-    
+    try
+    {
+        std::ifstream infile {fileName};
+        std::string file_contents { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
+        pqxx::work W(C);
+        W.exec(file_contents);
+        W.commit();
+        return true;
+    } catch (const std::exception &e) {
+        std::cerr<< e.what() << std::endl;
+        return false;
+    } 
+    return true;
+}
+
+bool isCommandLineMode(int argc, char *argv[])
+{
+    for (int i = 0; i < argc; ++i)
+    {
+      if (!strcmp(argv[i], "--cmd"))
+      {
+         return i;
+      }
+     }
+   return 0;
 }
 
 int main(int argc, char *argv[])
 {
     int initIdx = isInitRun(argc, argv);
+    bool commandLine = isCommandLineMode(argc, argv);
     std::vector<json> jsonVec;
     std::string dbName;
     std::string userName;
     std::string userPassword;
     std::ifstream inputFile;
-    if (argc > 2 or (argc > 1 and !initIdx))
+    std::string jsonLine;
+    json first;
+
+    if(commandLine)
+    {
+        std::getline(std::cin, jsonLine);
+        if(jsonLine == "exit") return 0;
+        jsonLine.erase(remove_if(jsonLine.begin(), jsonLine.end(), isspace),jsonLine.end());
+        if (jsonLine.length() > 0 and jsonLine[0] != '-')
+        {
+            first = json::parse(jsonLine);
+        }
+    }
+    else if (argc > 2 or (argc > 1 and !initIdx))
     {
         std::string inputLine;
         char* fileName;
@@ -78,15 +117,19 @@ int main(int argc, char *argv[])
         }
         inputFile.open(fileName, std::ifstream::in);
         while (inputFile.good())
-        {
-            std::getline(inputFile, inputLine);
-            jsonVec.push_back(std::move(json::parse(inputLine)));
+        {   
+                std::getline(inputFile, inputLine);
+            if (inputLine.length() > 0 and inputLine[0] != '-')
+            {
+                jsonVec.push_back(std::move(json::parse(inputLine)));
+            }
         }
-
+        first = jsonVec[0];
+        inputFile.close();
     }
-    inputFile.close();
+    
 
-    if (handleFirstJson(jsonVec[0], initIdx, dbName, userName, userPassword))
+    if (handleFirstJson(first, initIdx, dbName, userName, userPassword))
     {
         try {
             std::string connectStr = "dbname = " + dbName + " user = " + userName + " password = " + userPassword+ " \
@@ -95,14 +138,42 @@ int main(int argc, char *argv[])
 
             if (C.is_open())
             {   
+                if (initIdx)
+                {
+                    if (!prepareDataBase("database.psql", C))
+                    {
+                        std::cout << "Cannot create database from file." << std::endl;
+                    }
+                }
+
                 ProjectAPI* papi = new ProjectAPI(jsonVec, C, initIdx);
-                papi->process();
+                if(commandLine)
+                {   
+                    json processjs;
+                    while(true)
+                    {
+                        std::getline(std::cin, jsonLine);
+                        if(jsonLine == "exit") break;
+                        jsonLine.erase(remove_if(jsonLine.begin(), jsonLine.end(), isspace), jsonLine.end());
+                        
+                        if (jsonLine.length() > 0)
+                        {
+                            processjs = json::parse(jsonLine);
+                            papi->processJson(processjs);
+                        }
+
+                    }
+                }
+                else
+                {
+                    papi->process();
+                }
                 delete papi;
 
             }
             else
             {
-                 std::cout << "Can't open database" << std::endl;
+                 std::cout << "Cannot open database." << std::endl;
             }
 
             C.disconnect ();

@@ -8,18 +8,11 @@ ProjectAPI::ProjectAPI(std::vector<json>& vec, pqxx::connection& C, int idx)
     
 }
 
-ProjectAPI::~ProjectAPI()
-{
-}
-
-
 bool ProjectAPI::addUser(json& js)
 {
-    std::cout << "addUser\n" ;
     pqxx::nontransaction N(connect);
     std::string maxsql = "SELECT id FROM dataid WHERE id=" + js["member"].dump()+";";
     
-    std::cout << maxsql << "\n";
     pqxx::result R( N.exec( maxsql ));
     auto id = R.begin();
     std::string memberStr = js["member"].dump();
@@ -28,14 +21,12 @@ bool ProjectAPI::addUser(json& js)
     if (!id[0].is_null())
     {
         //TODO ERROR;
-        showErrorStatus();
         return false;
     }
     else
     {
         try {
             pqxx::work W(connect);
-            std::cout << js["member"].dump() << "\n";
             std::string insert = "INSERT INTO dataid VALUES("+ js["member"].dump() + ");";
             W.exec(insert);
             std::string pass = js["password"].dump();
@@ -44,7 +35,6 @@ bool ProjectAPI::addUser(json& js)
                     ", false, TO_TIMESTAMP(" + js["timestamp"].dump() + "), default, default);";
             W.exec(insert);
               W.commit();
-            showSuccessStatus();
             } catch (const std::exception &e) {
                 std::cerr << e.what() << std::endl;
                 return false;
@@ -55,54 +45,58 @@ bool ProjectAPI::addUser(json& js)
 
 bool ProjectAPI::process()
 {
-    std::cout << "process()\n";
     for (auto js : jsonVec)
     {
-        std::cout << js << std::endl;
-        bool status = false;
-        if (js["leader"] != nullptr)
-        {   
-            if (!initRun)
-            {
-                showErrorStatus();
-                return false;
-            }
-            status = leader(js["leader"]);
-        }
-        else if (js["trolls"] != nullptr)   status = trolls(js["trolls"]);
-        else if (js["protest"] != nullptr) status = support(js["protest"], false);
-        else if (js["support"] != nullptr)  status = support(js["support"], true);
-        else if (js["upvote"] != nullptr)   status = upvote(js["upvote"], true);
-        else if (js["downvote"] != nullptr) status = upvote(js["downvote"], false);
-        else if (js["votes"] != nullptr)    status = votes(js["votes"]);
-        else if (js["actions"] != nullptr)  status = actions(js["actions"]);
-        else if (js["projects"] != nullptr) status = projects(js["projects"]);
-        else if (js["open"] != nullptr)
-        {
-            status = true;
-            showSuccessStatus();
-        }
-        if (!status) showErrorStatus();
-        status = false;
+        processJson(js);
     }
     return true;
 }
 
+bool ProjectAPI::processJson(json& js)
+{
+    std::cout << "------------------------------------------------------------------------"
+        << "---------------------------------------\n";
+    std::cout << js << "\n";
+    bool status = false;
+    if (js["leader"] != nullptr)
+    {   
+        if (!initRun)
+        {
+            showErrorStatus();
+            return false;
+        }
+        status = leader(js["leader"]);
+    }
+    else if (js["trolls"] != nullptr)   status = trolls(js["trolls"]);
+    else if (js["protest"] != nullptr) status = support(js["protest"], false);
+    else if (js["support"] != nullptr)  status = support(js["support"], true);
+    else if (js["upvote"] != nullptr)   status = upvote(js["upvote"], true);
+    else if (js["downvote"] != nullptr) status = upvote(js["downvote"], false);
+    else if (js["votes"] != nullptr)    status = votes(js["votes"]);
+    else if (js["actions"] != nullptr)  status = actions(js["actions"]);
+    else if (js["projects"] != nullptr) status = projects(js["projects"]);
+    else if (js["open"] != nullptr)
+    {
+        status = true;
+        showSuccessStatus();
+    }
+    if (!status) showErrorStatus();
+    status = false;
+}
+
 bool ProjectAPI::checkCorrectness(json& js, bool leader, bool add)
 {
-    std::cout << "checkCorrectness\n" ;
     pqxx::nontransaction N(connect);
     std::string pass = js["password"].dump();
     std::replace(pass.begin(), pass.end(), '"', '\'');
-    std::string sql = "SELECT leader, EXTRACT(seconds from last_active) FROM politician WHERE member=" + js["member"].dump() + " AND pass=" + pass +";";
-    std::cout << sql << "\n";
+    std::string sql = "SELECT leader, CAST(EXTRACT (epoch from last_active) as integer) FROM politician WHERE member=" + js["member"].dump() + " AND pass=" + pass +";";
     pqxx::result R( N.exec( sql ));
     N.commit();
-    if (R.begin() == R.end())
+    if (R.empty())
     {   
         if(add)
         {
-            addUser(js);
+            if (! addUser(js)) return false;
             return true;
         }
         return false;
@@ -115,15 +109,13 @@ bool ProjectAPI::checkCorrectness(json& js, bool leader, bool add)
                 pqxx::work W(connect);
             updateTimestamp(js, W);
             W.commit();
-            std::cout << " !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11"<< std::endl;
-            std::cout << row[0].as<std::string>() << std::endl;
-            std::cout << leader << std::endl;
             if ( leader and row[0].as<std::string>() == "f")
             {
                  std::cout << "User don't have leader credentials." << "\n"; 
                  return false;
             }
             
+
             if (static_cast<int>(js["timestamp"]) - 31556926 > row[1].as<int>())
             {
                 return false;
@@ -136,13 +128,11 @@ bool ProjectAPI::checkCorrectness(json& js, bool leader, bool add)
 
 bool ProjectAPI::leader(json& js)
 {
-    std::cout << "leader\n" ;
     try {
         pqxx::work W(connect);
         std::string insert;
         /* Create a transactional object. */
 
-        std::cout << js["member"].dump() << "\n";
         insert = "INSERT INTO dataid VALUES("+ js["member"].dump() + ");";
         W.exec(insert);
         std::string pass = js["password"].dump();
@@ -154,7 +144,6 @@ bool ProjectAPI::leader(json& js)
 
         /* Execute SQL query */
         W.commit();
-        std::cout << "Table dataid insert successfully" << std::endl;
         return true;
         }catch (const std::exception &e) {
             std::cerr << e.what() << std::endl;
@@ -165,16 +154,14 @@ bool ProjectAPI::leader(json& js)
 
 void ProjectAPI::updateTimestamp(json& js, pqxx::work& W)
 {
-    std::cout << "updateTimestamp\n" ;
         try {
-        std::string update = "UPDATE politician SET last_active  = TO_TIMESTAMP(" + js["timestamp"].dump() +
+        std::string update = "UPDATE politician SET last_active=TO_TIMESTAMP("+ js["timestamp"].dump() +
             ") WHERE member=" + js["member"].dump() +";";
 
         /* Create a transactional object. */
         
         /* Execute SQL query */
         W.exec(update);
-        std::cout << "Table politician(timestamp) updated successfully" << std::endl;
    } catch (const std::exception &e) {
       std::cerr << e.what() << std::endl;
    }  
@@ -182,7 +169,6 @@ void ProjectAPI::updateTimestamp(json& js, pqxx::work& W)
 
 bool ProjectAPI::support(json& js, bool support)
 {
-    std::cout << "support\n" ;
     try {
         if(!checkCorrectness(js, false, true))
         {
@@ -191,16 +177,15 @@ bool ProjectAPI::support(json& js, bool support)
 
         pqxx::nontransaction N(connect);
         std::string sql = "SELECT id FROM dataid WHERE id=" + js["action"].dump() +";";
-        std::cout << sql << "\n";
         pqxx::result R( N.exec( sql ));
-        if (R.begin() != R.end())
+        if (!R.empty())
         {
             return false;
         }
 
         sql = "SELECT action FROM actions WHERE action=" + js["action"].dump();
         pqxx::result R2( N.exec( sql ));
-        if (R2.begin() != R2.end())
+        if (!R2.empty())
         {
             return false;
         }
@@ -210,10 +195,9 @@ bool ProjectAPI::support(json& js, bool support)
 
         N.commit();
         pqxx::work W(connect);
-        if (R3.begin() == R3.end())
+        if (R3.empty())
         {
             if (!addToDataID(static_cast<int>(js["project"]), W)) return false;
-            std::cout << js<< std::endl;
             if(addToDataID(static_cast<int>(js["authority"]), W))
             {
                 std::string insertAuthority = "INSERT INTO authorities VALUES(" + js["authority"].dump() + ");";
@@ -221,10 +205,6 @@ bool ProjectAPI::support(json& js, bool support)
             }
             
             std::string insertTemp = "INSERT INTO projects VALUES("+ js["project"].dump() +", " + js["authority"].dump() + ");";
-
-            /* Create a transactional object. */
-            
-            /* Execute SQL query */
 
             W.exec(insertTemp);
 
@@ -255,7 +235,6 @@ bool ProjectAPI::support(json& js, bool support)
     
         W.exec(insert);
         W.commit();
-        std::cout << "Table dataid insert successfullyffff" << std::endl;
         showSuccessStatus();
         return true;
     } catch (const std::exception &e) {
@@ -270,7 +249,6 @@ bool ProjectAPI::support(json& js, bool support)
 
 bool ProjectAPI::upvote(json& js, bool upvote)
 {
-    std::cout << "upvote\n" ;
     try {
         if(!checkCorrectness(js, false, true))
         {
@@ -279,16 +257,14 @@ bool ProjectAPI::upvote(json& js, bool upvote)
 
         pqxx::nontransaction N(connect);
         std::string sql = "SELECT memberid FROM actions WHERE action=" + js["action"].dump()+";";
-        std::cout << sql << std::endl;
         pqxx::result R1( N.exec( sql ));
-        if (R1.begin() == R1.end())
+        if (R1.empty())
         {
             return false;
         }
         sql = "SELECT actionid FROM votes WHERE memberid=" + js["member"].dump() + " AND actionid=" + js["action"].dump() +";";
-        std::cout << sql << std::endl;
         pqxx::result R( N.exec( sql ));
-        if (R.begin() != R.end())
+        if (!R.empty())
         {
             return false;
         }
@@ -311,7 +287,6 @@ bool ProjectAPI::upvote(json& js, bool upvote)
         W.exec(insert);
         W.exec(update);
         W.commit();
-        std::cout << "Table dataid insert successfully" << std::endl;
         showSuccessStatus();
         return true;
 
@@ -327,7 +302,6 @@ bool ProjectAPI::upvote(json& js, bool upvote)
 
 bool ProjectAPI::actions(json& js)
 {
-    std::cout << "actions\n" ;
     try {
         bool first = false;
         if(!checkCorrectness(js, false, false))
@@ -340,7 +314,7 @@ bool ProjectAPI::actions(json& js)
             SUM (CASE WHEN upvote=true THEN 1 ELSE 0 END) AS \"upvoteCount\", \
             SUM (CASE WHEN upvote=false THEN 1 ELSE 0 END) as \"downvoteCount\" \
             FROM ACTIONS \
-            JOIN votes (action=votes.actionid)";
+            JOIN votes ON(action=votes.actionid)";
         if(js["support"] != nullptr)
         {
             first = true;
@@ -360,6 +334,7 @@ bool ProjectAPI::actions(json& js)
             }
             else 
             {
+                first = true;
                 sql += " WHERE projectid=" + js["project"].dump();
             }
         }
@@ -371,10 +346,20 @@ bool ProjectAPI::actions(json& js)
             }
             else 
             {
+                first = true;
                 sql += " WHERE authorityid=" + js["authority"].dump();
             }
         }
-        sql+=";";
+        if (first)
+        {
+            sql += " AND action=" + js["action"].dump();
+        }
+        else
+        {
+            first = true;
+            sql += " WHERE action=" + js["action"].dump();
+        }
+        sql+=" GROUP BY action;";
 
 
         pqxx::result R1( N.exec( sql ));
@@ -449,7 +434,8 @@ bool ProjectAPI::votes(json& js)
 
         if(js["project"] != nullptr)
         {
-            upvotesSql+= " LEFT JOIN projects ON(projects.actionid=votes.actionid) \
+            upvotesSql+= " LEFT JOIN actions ON(actions.action=votes.actionid) \
+                left JOIN projects ON(projects.project=actions.projectid) \
                 WHERE projects.project="+ js["project"].dump();
              
         }
@@ -479,28 +465,20 @@ bool ProjectAPI::votes(json& js)
 
 bool ProjectAPI::trolls(json& js)
 {
-    std::cout << "trolls" << std::endl;
     try {
         pqxx::nontransaction N(connect);
         std::vector<json> returnVecJson;
-        std::string sql = "SELECT member, EXTRACT(seconds from last_active), downvotes, upvotes FROM politician;";
-        std::cout << sql << std::endl;
+        std::string sql = "SELECT member, CAST(EXTRACT (epoch from last_active) as integer), upvotes, downvotes FROM politician WHERE downvotes>upvotes;";
         pqxx::result R( N.exec( sql ));
  
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c)
         {
-            std::cout << js << std::endl;
-            std::cout << js["timestamp"] << std::endl;
-            std::cout << c[1].as<int>() << std::endl;
-            
             if (static_cast<int>(js["timestamp"]) - 31556926 > c[1].as<int>())
             {
-                std::cout << "IF " << std::endl;
                 returnVecJson.push_back({c[0].as<int>(), c[2].as<int>(), c[3].as<int>(), "false"});
             }
             else
             {
-                std::cout << "ELse" << std::endl;
                 returnVecJson.push_back({c[0].as<int>(), c[2].as<int>(), c[3].as<int>(), "true"});
             }
         }
@@ -518,12 +496,10 @@ bool ProjectAPI::trolls(json& js)
 
 bool ProjectAPI::addToDataID(int id, pqxx::work& W)
 {
-std::cout << "addToDataId\n" ;
     try {
         std::string insert = "INSERT INTO dataid VALUES("+ std::to_string(id) + ");";
         W.exec(insert);
 
-        std::cout << "Table dataid insert successfully" << std::endl;
         return true;
 
     } catch (const std::exception &e) {
@@ -535,7 +511,6 @@ std::cout << "addToDataId\n" ;
 
 void ProjectAPI::showSuccessStatus()
 {
-    std::cout << "showSuccessStatus\n" ;
     json j;
     j["status"] = "OK";
     std::cout << j << "\n";
@@ -543,7 +518,6 @@ void ProjectAPI::showSuccessStatus()
 
 void ProjectAPI::showErrorStatus()
 {   
-    std::cout << "showErrorStatus\n" ;
     json j;
     j["status"] = "ERROR";
     std::cout << j << "\n";

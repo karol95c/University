@@ -2,6 +2,7 @@
 #include <pqxx/pqxx>
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <string>
 
 
 using json = nlohmann::json;
@@ -17,9 +18,10 @@ class ProjectAPI
 
     public:
     ProjectAPI(std::vector<json>& vec, pqxx::connection& C, int idx);
-    ~ProjectAPI();
+    ~ProjectAPI() = default;
     ProjectAPI(bool init);
     bool process();
+    bool processJson(json& js);
     private:
     void handleQuery();
 
