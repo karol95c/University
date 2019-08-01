@@ -19,7 +19,7 @@
 class Transporter
 {
     public:
-    explicit Transporter(int p, FILE *f, int s);
+    explicit Transporter(int p, FILE *f, int s, char* d);
     ~Transporter();
     void Process();
 
@@ -44,6 +44,7 @@ class Transporter
     int current;
     int last;
     int count;
+    char* destination;
 };
 
 #endif // _TRANSPORT_H_

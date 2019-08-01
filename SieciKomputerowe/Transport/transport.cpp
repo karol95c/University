@@ -3,11 +3,11 @@
 const int DATA_SIZE = 1000;
 const int WINDOW_SIZE = 1000;
 const int TIMEXP = 500000;
-const char* DESTINATION = "156.17.4.30";
 
-Transporter::Transporter(int p, FILE *f, int s) : port(p), size(s), current(-1), last(-1)
+Transporter::Transporter(int p, FILE *f, int s, char* d) : port(p), size(s), current(-1), last(-1), destination(d)
 {
     file = f;
+
     count = ceil (static_cast<double>(size) / static_cast<double>(DATA_SIZE));
 
     for (int i = 0; i < WINDOW_SIZE; i++)
@@ -41,7 +41,11 @@ bool Transporter::PrepareSocket()
 	sockAddr.sin_port = htons(port);
 	sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	if (inet_pton(AF_INET, DESTINATION, &sockAddr.sin_addr) != 1) return false;
+	if (inet_pton(AF_INET, destination, &sockAddr.sin_addr) != 1)
+    {
+        std::cerr << "Ivalid network address!" << std::endl;
+        return false;
+    }
 
 	return true;
 }
@@ -198,7 +202,7 @@ bool Transporter::GetData()
 
         inet_ntop(AF_INET, &(sender.sin_addr), sendIP, sizeof(sendIP));
 
-        if (!strcmp(DESTINATION, sendIP) && (ntohs(sender.sin_port) == port))
+        if (!strcmp(destination, sendIP) && (ntohs(sender.sin_port) == port))
         {
             Get(buffer);
         }
