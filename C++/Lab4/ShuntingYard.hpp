@@ -6,7 +6,11 @@
 
 class ShuntingYard
 {
-    private:
+public:
+    ShuntingYard(std::vector<std::string>& toConv);
+    void convertToONP();
+
+private:
     std::vector<std::string> toConvert;
     std::queue<char> input;
     std::stack<char> operators;
@@ -20,9 +24,5 @@ class ShuntingYard
     bool firstCase(char) const;
     bool secondCase(char) const;
     void toONP(std::string&);
-
-    public:
-    ShuntingYard(std::vector<std::string>& toConv);
-    void convertToONP();
 
 };

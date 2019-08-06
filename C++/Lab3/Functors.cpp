@@ -145,7 +145,7 @@ void printRange(std::vector<double>& V, std::list<std::string>& L, std::set<int>
     std::ostream_iterator<double> out_double(std::cout,", ");
     std::ostream_iterator<std::string> out_string (std::cout,", ");
     std::ostream_iterator<int> out_int (std::cout,", ");
-    std::cout << "Wypisz wszystkie wartości z zadanego zakresu (większe od a i mniejsze od b):" << std::endl;
+    std::cout << "Show all values from range (a, b): " << std::endl;
     std::copy_if(V.begin(), V.end(), out_double, Range<double>(1.0, 3.0));
     std::cout << std::endl;
     std::copy_if(L.begin(), L.end(), out_string, Range<std::string>("b", "h"));
@@ -156,7 +156,7 @@ void printRange(std::vector<double>& V, std::list<std::string>& L, std::set<int>
 
 void printSum(std::vector<double>& V, std::list<std::string>& L, std::set<int>& S)
 {
-    std::cout << "Wyznacz sumę/konkatenację wszystkich elementów:" << std::endl;
+    std::cout << "Show sum/concatenation of elements: " << std::endl;
     std::cout << std::accumulate(V.begin(), V.end(), 0.0, [](const double a, const double b) { return a + b;}) << std::endl;
     std::cout << std::accumulate(L.begin(), L.end(), std::string(), [](const std::string a, const std::string b) { return a + b; }) << std::endl;
     std::cout << std::accumulate(S.begin(), S.end(), 0, [](const int a, const int b) { return a + b; });
@@ -165,7 +165,7 @@ void printSum(std::vector<double>& V, std::list<std::string>& L, std::set<int>& 
 
 void printAddValue(std::vector<double>& V, std::list<std::string>& L, std::set<int>& S)
 {
-    std::cout << "Dodaj wartosc do każdego elementu kontenera: " << std::endl;
+    std::cout << "Add value to each element of container " << std::endl;
     std::for_each(V.begin(), V.end(), AddValue<double>(10.0));
     // std::transform(V.begin(), V.end(), V.begin(), std::bind2nd(std::plus<double>(), 1000.0));
     for (auto v : V) std::cout << v << " " ;
@@ -177,14 +177,14 @@ void printAddValue(std::vector<double>& V, std::list<std::string>& L, std::set<i
 
 void printAverage(std::vector<double>& V, std::list<std::string>& L, std::set<int>& S)
 {
-    std::cout << "Wyznasz średnią wartość elementów: " << std::endl;
+    std::cout << "Show average value of elements:  " << std::endl;
     auto lambda = [&](double a, double b){return a + b / V.size(); };
     std::cout << std::accumulate(V.begin(), V.end(), 0.0, [&V](double a, double b){return a + b / V.size(); }) << std::endl;
     std::cout << std::accumulate(S.begin(), S.end(), 0.0, [&S](double a, double b){return a + b / S.size();}) <<std::endl;
 }
 void printMinMax(std::vector<double>& V, std::list<std::string>& L, std::set<int>& S)
 {
-    std::cout << "Wypisz min i max wartość elementów: " << std::endl;
+    std::cout << "Show min and max of elements: " << std::endl;
     auto resultVector = std::accumulate(V.begin(), V.end(), std::pair< vectorIterator, vectorIterator >(),
         MinMaxVector(V.begin()));
     std::cout << *resultVector.first << std::endl;
@@ -204,7 +204,7 @@ void printMyIdeas(std::vector<double>& V, std::list<std::string>& L, std::set<in
     std::ostream_iterator<double> out_double(std::cout,", ");
     std::ostream_iterator<std::string> out_string (std::cout,", ");
     std::ostream_iterator<int> out_int (std::cout,", ");
-    std::cout << "Suma cyfr jest parzysta: " << std::endl;
+    std::cout << "Count of digits is even: " << std::endl;
     std::copy_if(V.begin(), V.end(), out_double, [](double element)
         {
             int sum = 0;
@@ -216,7 +216,7 @@ void printMyIdeas(std::vector<double>& V, std::list<std::string>& L, std::set<in
             return sum % 2;
         });
     std::cout << std::endl;
-    std::cout << "Suma cyfr jest nieparzysta: " << std::endl;
+    std::cout << "Count of digits is odd: " << std::endl;
     std::copy_if(S.begin(), S.end(), out_int,
         [](int element)
         {
