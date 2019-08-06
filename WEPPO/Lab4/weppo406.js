@@ -1,7 +1,7 @@
 const fs = require('fs');
 // fs.setE
 
-fs.readFile('./WEPPO/Lista4/zad6a.txt', 'utf-8', function read(err, data) {
+fs.readFile('./WEPPO/Lab4/lab6a.txt', 'utf-8', function read(err, data) {
     if (err) {
         throw err;
     }
