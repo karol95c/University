@@ -1,7 +1,0 @@
-nslookup -type=soa ii.uni.wroc.pl
-nslookup  ii.uni.wroc.pl swiatowit.ii.uni.wroc.pl
-nslookup -type=mx ii.uni.wroc.pl swiatowit.ii.uni.wroc.pl
-
-nslookup -type=soa  uj.edu.pl
-nslookup uj.edu.pl theta.uoks.uj.edu.pl
-nslookup -type=mx  uj.edu.pl theta.uoks.uj.edu.pl

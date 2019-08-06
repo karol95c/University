@@ -1,0 +1,51 @@
+<!-- index.html -->
+
+<!doctype html>
+<html>
+<head>
+    <title>Look I'm AJAXing!</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css"> <!-- load bootstrap via CDN -->
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> <!-- load jquery via CDN -->
+    <script src="magic.js"></script> <!-- load our javascript file -->
+</head>
+<body>
+<div class="col-sm-6 col-sm-offset-3">
+
+    <h1>Processing an AJAX Form</h1>
+
+    <!-- OUR FORM -->
+    <form action="process.php" method="POST">
+
+        <div id="login-group" class="form-group">
+            <label for="login">Login</label>
+            <input type="text" class="form-control" name="login" placeholder="login">
+            <!-- errors will go here -->
+        </div>
+
+        <div id="password-group" class="form-group">
+            <label for="password">Password</label>
+            <input type="password" class="form-control" name="password" placeholder="password">
+            <!-- errors will go here -->
+        </div>
+
+        <div id="repeat-group" class="form-group">
+            <label for="repeat">Repeat password</label>
+            <input type="password" class="form-control" name="repeat" placeholder="password">
+            <!-- errors will go here -->
+        </div>
+
+        <div id="birth-group" class="form-group">
+            <label for="birth">Birth date</label>
+            <input type="text" class="form-control" name="birth" placeholder="01-01-1990">
+            <!-- errors will go here -->
+        </div>
+
+        <button type="submit" class="btn btn-success">Submit <span class="fa fa-arrow-right"></span></button>
+
+    </form>
+
+</div>
+</body>
+</html>
+

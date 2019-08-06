@@ -1,5 +1,0 @@
-Protokół jest bezstanowy to znaczy rozpatruje każde zapytanie niezależnie, nie szuka powiązań.
-Na przykład, który serwer wysyła kilka zapytań.
-
-Sesje umożliwiają śledzenie odwiedzającego stronę.
-Czy dopiero wszedł czy przeszedł z innej strony podserwisu.
