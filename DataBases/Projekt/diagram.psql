@@ -1,0 +1,37 @@
+Table dataid{
+  id numeric [pk]
+}
+
+Table politician {
+  member numeric [pk, ref: - dataid.id]
+  passsword varchar[128]
+  leader boolean
+  last_active timestamp
+  votes_ratio numeric
+  }
+
+Table actions {
+  action numeric [pk, ref: - dataid.id]
+  projectid numeric [pk, ref: > projects.project]
+  authorityid numeric [pk, ref: > authority.authorityid]
+  support boolean
+  memberid numeric [pk, ref: > politician.member]
+
+}
+
+Table projects {
+  project numeric [pk, ref: - dataid.id]
+  authorityid numeric [pk]
+}
+
+Table votes {
+  actionid numeric [pk, ref: > actions.action]
+  memberid numeric [ref: > politician.member]
+  upvote boolean
+}
+
+
+
+Table authority{
+  authorityid [pk, ref: - dataid.id]
+}

@@ -1,0 +1,13 @@
+DROP TABLE votes;
+DROP TABLE actions;
+DROP TABLE projects;
+DROP TABLE authorities;
+DROP TABLE politician;
+DROP TABLE dataid;
+
+DROP role app;
+DROP sequence idseq;
+
+DROP role init;
+DROP database student;
+
