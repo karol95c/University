@@ -23,7 +23,7 @@ def decompress(text):
     for ch in text:
         if (ch.isdigit()):
             number += ch
-        elif (ch.isalpha()):
+        else:
             if number:
                 x = int(number)
                 number = ""
@@ -32,7 +32,7 @@ def decompress(text):
             decompressed += x * ch
     return decompressed
 
-TEST_STRING1 = "suuuuper"
+TEST_STRING1 = "suuuu....per"
 TEST_STRING2 = "aaaa"
 TEST_STRING3 = "abaaa"
 print(compress(TEST_STRING1))
