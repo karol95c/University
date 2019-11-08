@@ -1,3 +1,0 @@
-insert into politician values(2, 'qwerty', true, TO_TIMESTAMP(160000000), 0);
-insert into politician values(3, 'qwerty', false, TO_TIMESTAMP(160000000), 0);
-insert into politician values(1, 'qwerty', true, TO_TIMESTAMP(1000000), 0);
