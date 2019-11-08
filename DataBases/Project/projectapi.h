@@ -22,11 +22,10 @@ class ProjectAPI
     ProjectAPI(bool init);
     bool process();
     bool processJson(json& js);
+
     private:
+
     void handleQuery();
-
-    private:
-
     bool addToDataID(int id, pqxx::work& W);
     bool checkCorrectness(json& js, bool leader, bool add);
     void updateTimestamp(json& j, pqxx::work& W);
