@@ -23,10 +23,12 @@ def crawl(start_page, distance, action):
                 crawl_inner(href, dist - 1, tps)
 
     crawl_inner(start_page, distance, tuples)
+
     for t in tuples:
-        print("Link: ", t[0])
-        print(t[1])
-        print(20*'-')
+        if (t[1]):
+            print("Link: ", t[0])
+            print(t[1])
+            print(20*'-')
     return tuples
 
 def find_python(html):
