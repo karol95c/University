@@ -7,32 +7,70 @@ typedef struct proc {
 } proc_t;
 
 typedef struct job {
-  pid_t pgid;            /* 0 if slot is free */
-  proc_t *proc;          /* array of processes running in as a job */
-  struct termios tmodes; /* saved terminal modes */
-  int nproc;             /* number of processes */
-  int state;             /* changes when live processes have same state */
-  char *command;         /* textual representation of command line */
+  pid_t pgid;    /* 0 if slot is free */
+  proc_t *proc;  /* array of processes running in as a job */
+  int nproc;     /* number of processes */
+  int state;     /* changes when live processes have same state */
+  char *command; /* textual representation of command line */
 } job_t;
 
-static job_t *jobs = NULL;          /* array of all jobs */
-static int njobmax = 1;             /* number of slots in jobs array */
-static int tty_fd = -1;             /* controlling terminal file descriptor */
-static struct termios shell_tmodes; /* saved shell terminal modes */
+static job_t *jobs = NULL; /* array of all jobs */
+static int njobmax = 1;    /* number of slots in jobs array */
+static int tty_fd = -1;    /* controlling terminal file descriptor */
 
 static void sigchld_handler(int sig) {
   int old_errno = errno;
   pid_t pid;
   int status;
+  int i = 0;
+  pid_t child;
+  int stat;
+  child = waitpid(-1, &stat, WNOHANG | WUNTRACED);
   /* TODO: Change state (FINISHED, RUNNING, STOPPED) of processes and jobs.
    * Bury all children that finished saving their status in jobs. */
+  job_t *job = jobs;
+  int stopped = 0;
+  int finished = 0;
+  int j = 0;
+
+  while (child > 0) {
+    for (i = 0; i < njobmax; ++i) {
+      job = &jobs[i];
+      // if pgid is job->pgid then process belongs to job
+      if (getpgid(child) == job->pgid) {
+        for (j = 0; j < job->nproc; ++j) {
+          if (job->proc[i].pid == child) {
+            job->proc[i].exitcode = stat;
+            if (WIFSTOPPED(stat)) {
+              job->proc[i].state = STOPPED;
+            } else {
+              job->proc[i].state = FINISHED;
+            }
+          }
+
+          if (STOPPED == job->proc[i].state) {
+            ++stopped;
+          } else if (FINISHED == job->proc[i].state) {
+            ++finished;
+          }
+        }
+        if (stopped == job->nproc) {
+          job->state = STOPPED;
+        } else if (finished == job->nproc) {
+          job->state = FINISHED;
+        }
+
+        break;
+      }
+    }
+    child = waitpid(-1, &stat, WNOHANG | WUNTRACED);
+  }
+
   errno = old_errno;
 }
 
 /* When pipeline is done, its exitcode is fetched from the last process. */
-static int exitcode(job_t *job) {
-  return job->proc[job->nproc - 1].exitcode;
-}
+static int exitcode(job_t *job) { return job->proc[job->nproc - 1].exitcode; }
 
 static int allocjob(void) {
   /* Find empty slot for background job. */
@@ -42,7 +80,6 @@ static int allocjob(void) {
 
   /* If none found, allocate new one. */
   jobs = realloc(jobs, sizeof(job_t) * (njobmax + 1));
-  memset(&jobs[njobmax], 0, sizeof(job_t));
   return njobmax++;
 }
 
@@ -61,7 +98,6 @@ int addjob(pid_t pgid, int bg) {
   job->command = NULL;
   job->proc = NULL;
   job->nproc = 0;
-  job->tmodes = shell_tmodes;
   return j;
 }
 
@@ -112,6 +148,10 @@ int jobstate(int j, int *statusp) {
   int state = job->state;
 
   /* TODO: Handle case where job has finished. */
+  if (FINISHED == state) {
+    *statusp = exitcode(job);
+    deljob(job);
+  }
 
   return state;
 }
@@ -145,6 +185,8 @@ bool killjob(int j) {
   debug("[%d] killing '%s'\n", j, jobs[j].command);
 
   /* TODO: I love the smell of napalm in the morning. */
+  kill(jobs[j].proc->pid, SIGTERM);
+  kill(jobs[j].proc->pid, SIGCONT);
 
   return true;
 }
@@ -165,7 +207,31 @@ int monitorjob(sigset_t *mask) {
   int exitcode, state;
 
   /* TODO: Following code requires use of Tcsetpgrp of tty_fd. */
+  int statusp;
+  int i;
+  int parent_pgid = getpgrp();
+  sigset_t old_mask;
+  Sigprocmask(SIG_SETMASK, mask, &old_mask);
+  // Tcsetpgrp(tty_fd, jobs[FG].pgid);
+  int nproc = jobs[FG].nproc - 1;
+  pid_t p2 = jobs[FG].proc[nproc].pid;
+  pid_t pid = waitpid(p2, &exitcode, WUNTRACED);
+  state = jobs[FG].state;
+  
+  if (STOPPED == state)
+  {
+      //move to background, move shell to foreground
+    int i = allocjob();
+    memcpy(&jobs[i], &jobs[FG], sizeof(job_t));
+    memset(&jobs[FG], 0, sizeof(job_t));
+  }
+  else if (FINISHED == state)
+  {
+      //move shell to foreground
+  }
+  // Tcsetpgrp(tty_fd, parent_pgid);
 
+  Sigprocmask(SIG_BLOCK, &old_mask, NULL);
   return exitcode;
 }
 
@@ -178,13 +244,8 @@ void initjobs(void) {
    * Duplicate terminal fd, but do not leak it to subprocesses that execve. */
   assert(isatty(STDIN_FILENO));
   tty_fd = Dup(STDIN_FILENO);
-  fcntl(tty_fd, F_SETFD, FD_CLOEXEC);
-
-  /* Take control of the terminal. */
-  Tcsetpgrp(tty_fd, getpgrp());
-
-  /* Save default terminal attributes for the shell. */
-  Tcgetattr(tty_fd, &shell_tmodes);
+  fcntl(tty_fd, F_SETFL, O_CLOEXEC);
+  // Tcsetpgrp(tty_fd, getpgrp());
 }
 
 /* Called just before the shell finishes. */
