@@ -1,5 +1,5 @@
-#include <readline/readline.h>
 #include <readline/history.h>
+#include <readline/readline.h>
 
 #define DEBUG 0
 #include "shell.h"
@@ -8,9 +8,7 @@ sigset_t sigchld_mask;
 
 static sigjmp_buf loop_env;
 
-static void sigint_handler(int sig) {
-  siglongjmp(loop_env, sig);
-}
+static void sigint_handler(int sig) { siglongjmp(loop_env, sig); }
 
 /* Rewrite closed file descriptors to -1,
  * to make sure we don't attempt do close them twice. */
@@ -29,6 +27,31 @@ static int do_redir(token_t *token, int ntokens, int *inputp, int *outputp) {
 
   for (int i = 0; i < ntokens; i++) {
     /* TODO: Handle tokens and open files as requested. */
+    if (token[i] == T_INPUT) {
+      mode = T_INPUT;
+    } else if (token[i] == T_OUTPUT) {
+      mode = T_OUTPUT;
+    } else {
+      if (mode == T_INPUT) {
+        int fd0 = open(token[i], O_RDWR | O_CREAT | O_APPEND, 0644);
+        if (-1 != fd0) {
+          *inputp = fd0;
+        }
+
+        token[i] = T_NULL;
+        mode = T_NULL;
+      } else if (mode == T_OUTPUT) {
+        int fd1 = open(token[i], O_RDWR | O_CREAT | O_APPEND, 0644);
+        if (-1 != fd1) {
+          *outputp = fd1;
+        }
+
+        token[i] = T_NULL;
+        mode = T_NULL;
+      } else {
+        ++n;
+      }
+    }
   }
 
   token[n] = NULL;
@@ -52,6 +75,56 @@ static int do_job(token_t *token, int ntokens, bool bg) {
   Sigprocmask(SIG_BLOCK, &sigchld_mask, &mask);
 
   /* TODO: Start a subprocess, create a job and monitor it. */
+  pid_t pid = Fork();
+  if (pid) {
+    // parent
+    int status;
+
+    Setpgid(pid, pid);
+    int job_idx = addjob(pid, bg);
+    addproc(job_idx, pid, token);
+    if (!bg) {
+      monitorjob(&mask);
+    }
+    // else
+    // {
+    //   safe_printf("[%d] running \'%s\'\n", job_idx, jobcmd(job_idx));
+    // }
+
+  } else {
+    // child
+    if (!bg) {
+      Signal(SIGTSTP, SIG_DFL);
+    }
+    // else
+    // {
+    //   if ((exitcode = builtin_command(token)) >= 0)
+    //   {
+    //     Sigprocmask(SIG_SETMASK, &mask, NULL);
+    //     return exitcode;
+    //   }
+    // }
+
+    Setpgid(0, 0);
+    char *arglist = jobcmd(0);
+    if (input > -1) {
+      safe_printf("input Dup2\n");
+      Dup2(input, STDIN_FILENO);
+      MaybeClose(&input);
+    }
+    if (output > -1) {
+      safe_printf("output Dup2\n");
+      Dup2(output, STDOUT_FILENO);
+      MaybeClose(&output);
+    }
+    if (execvp(token[0], token) > 0) {
+      safe_printf("ok\n");
+    } else {
+      safe_printf("not ok\n");
+      exit(0);
+    }
+    Signal(SIGTSTP, SIG_IGN);
+  }
 
   Sigprocmask(SIG_SETMASK, &mask, NULL);
   return exitcode;
@@ -62,7 +135,7 @@ static int do_job(token_t *token, int ntokens, bool bg) {
 static pid_t do_stage(pid_t pgid, sigset_t *mask, int input, int output,
                       token_t *token, int ntokens) {
   ntokens = do_redir(token, ntokens, &input, &output);
-
+  pid_t pid = 0;
   if (ntokens == 0)
     app_error("ERROR: Command line is not well formed!");
 
@@ -83,11 +156,12 @@ static void mkpipe(int *readp, int *writep) {
 /* Pipeline execution creates a multiprocess job. Both internal and external
  * commands are executed in subprocesses. */
 static int do_pipeline(token_t *token, int ntokens, bool bg) {
-  pid_t pid, pgid = 0;
-  int job = -1;
+  // pid_t pid, pgid = 0;
+  // int job = -1;
   int exitcode = 0;
 
-  int input = -1, output = -1, next_input = -1;
+  // int input = -1,
+  int output = -1, next_input = -1;
 
   mkpipe(&next_input, &output);
 
