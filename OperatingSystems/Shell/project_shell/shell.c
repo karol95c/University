@@ -85,25 +85,15 @@ static int do_job(token_t *token, int ntokens, bool bg) {
     addproc(job_idx, pid, token);
     if (!bg) {
       monitorjob(&mask);
+    } else {
+      safe_printf("[%d] running \'%s\'\n", job_idx, jobcmd(job_idx));
     }
-    // else
-    // {
-    //   safe_printf("[%d] running \'%s\'\n", job_idx, jobcmd(job_idx));
-    // }
 
   } else {
     // child
     if (!bg) {
       Signal(SIGTSTP, SIG_DFL);
     }
-    // else
-    // {
-    //   if ((exitcode = builtin_command(token)) >= 0)
-    //   {
-    //     Sigprocmask(SIG_SETMASK, &mask, NULL);
-    //     return exitcode;
-    //   }
-    // }
 
     Setpgid(0, 0);
     char *arglist = jobcmd(0);
@@ -117,13 +107,19 @@ static int do_job(token_t *token, int ntokens, bool bg) {
       Dup2(output, STDOUT_FILENO);
       MaybeClose(&output);
     }
+
+    if ((exitcode = builtin_command(token)) >= 0) {
+      Sigprocmask(SIG_SETMASK, &mask, NULL);
+      exit(0);
+    }
+
     if (execvp(token[0], token) > 0) {
       safe_printf("ok\n");
     } else {
       safe_printf("not ok\n");
-      exit(0);
     }
     Signal(SIGTSTP, SIG_IGN);
+    exit(0);
   }
 
   Sigprocmask(SIG_SETMASK, &mask, NULL);

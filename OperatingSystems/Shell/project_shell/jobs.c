@@ -57,9 +57,11 @@ static void sigchld_handler(int sig) {
             safe_printf("pid: %d, continue\n", child);
           } else if (WIFSIGNALED(status)) {
             job->proc[j].state = FINISHED;
+            safe_printf("SIGNALED WITH SIGNAL: %d\n", WTERMSIG(status));
             safe_printf("pid: %d, signaled\n", child);
           } else if (WIFEXITED(status)) {
             job->proc[j].state = FINISHED;
+            safe_printf("WEXITSTATUS: %d\n", WEXITSTATUS(status));
             // safe_printf("finished\n");
             safe_printf("pid: %d, finished\n", child);
           }
