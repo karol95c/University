@@ -32,7 +32,7 @@ ExportedObj/
 *.bin
 *.lst
 *.srec
-
+*.d
 # Unity3D generated meta files
 *.pidb.meta
 *.pdb.meta
@@ -43,3 +43,6 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
+
+# code formatting
+.clang-format
