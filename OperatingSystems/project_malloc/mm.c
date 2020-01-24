@@ -231,6 +231,7 @@ static inline void coalesce_two_free(size_t size, void *bp) {
  * coalesce - boundary tag coalescing. Return ptr to coalesced block
  */
 static inline void *coalesce(void *bp) {
+  print_block_info(bp);
   unsigned int prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
   unsigned int next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
   size_t size = GET_SIZE(HDRP(bp));
@@ -343,10 +344,6 @@ static inline void adjust_size(void *bp, size_t size) {
   PUT(FTRP(bp), PACK(size, 1));
 
   next = NEXT_BLKP(bp);
-  if (NULL == next) {
-    int a = 0;
-    (void)a;
-  }
 
   PUT(HDRP(next), PACK(old_size - size, 0));
   PUT(FTRP(next), PACK(new_size, 0));
@@ -412,7 +409,7 @@ void free(void *ptr) {
     printf("FREE: %p\n", ptr);
   }
 
-  if (!ptr)
+  if (!ptr || !GET_ALLOC(HDRP(ptr)))
     return;
   size_t size = GET_SIZE(HDRP(ptr));
 
@@ -426,6 +423,9 @@ void free(void *ptr) {
  *      copying its data, and freeing the old block.
  **/
 void *realloc(void *old_ptr, size_t size) {
+  size_t old_size;
+  size_t new_size;
+  void *next;
   if (VERBOSE) {
     printf("REALLOC\n");
   }
@@ -439,23 +439,68 @@ void *realloc(void *old_ptr, size_t size) {
   if (!old_ptr)
     return malloc(size);
 
-  void *new_ptr = malloc(size);
+  old_size = GET_SIZE(HDRP(old_ptr));
+  new_size = MAX(round_up(size + MIN_BLKSIZE), MIN_BLKSIZE);
+  if (old_size > new_size) {
+    if (old_size - new_size <= MIN_BLKSIZE) {
+      return old_ptr;
+    }
+    PUT(HDRP(old_ptr), PACK(new_size, 1));
+    PUT(FTRP(old_ptr), PACK(new_size, 1));
+
+    next = NEXT_BLKP(old_ptr);
+
+    PUT(HDRP(next), PACK(old_size - new_size, 0));
+    PUT(FTRP(next), PACK(old_size - new_size, 0));
+    add_to_free_list(next);
+    return old_ptr;
+  } else if (old_size < new_size) {
+    /* check if next free */
+    void *next_ptr = NEXT_BLKP(old_ptr);
+    size_t next_size = GET_SIZE(HDRP(next_ptr));
+
+    if (!GET_ALLOC(HDRP(next_ptr)) && (old_size + next_size >= new_size)) {
+      // size_t rescue = old_size + next_size - new_size;
+      // if (rescue >= MIN_BLKSIZE)
+      // {
+      //   PUT(HDRP(next_ptr), PACK(next_size, 1));
+      //   PUT(FTRP(next_ptr), PACK(next_size, 1));
+      //   remove_from_free_list(next_ptr);
+      //   PUT(HDRP(old_ptr), PACK(new_size, 1));
+      //   PUT(FTRP(old_ptr), PACK(new_size, 1));
+      //   next_ptr = NEXT_BLKP(old_ptr);
+      //   PUT(HDRP(next_ptr), PACK(rescue, 0));
+      //   PUT(FTRP(next_ptr), PACK(rescue, 0));
+      //   add_to_free_list(next_ptr);
+      //   return old_ptr;
+      // }
+      PUT(HDRP(old_ptr), PACK(next_size + old_size, 1));
+      PUT(FTRP(old_ptr), PACK(next_size + old_size, 1));
+      remove_from_free_list(next_ptr);
+      return old_ptr;
+    }
+    void *new_ptr = malloc(new_size);
+    memcpy(new_ptr, old_ptr, old_size);
+    free(old_ptr);
+    return new_ptr;
+  }
+  return old_ptr;
 
   /* If malloc() fails, the original block is left untouched. */
-  if (!new_ptr)
-    return NULL;
+  // if (!new_ptr)
+  //   return NULL;
 
-  /* Copy the old data. */
-  // block_t *block = old_ptr - offsetof(block_t, payload);
-  // size_t old_size = get_size(block);
-  // if (size < old_size)
-  //   old_size = size;
-  // memcpy(new_ptr, old_ptr, old_size);
+  // /* Copy the old data. */
+  // // block_t *block = old_ptr - offsetof(block_t, payload);
+  // // size_t old_size = get_size(block);
+  // // if (size < old_size)
+  // //   old_size = size;
+  // // memcpy(new_ptr, old_ptr, old_size);
 
-  /* Free the old block. */
-  free(old_ptr);
+  // /* Free the old block. */
+  // free(old_ptr);
 
-  return new_ptr;
+  // return new_ptr;
 }
 
 /*
