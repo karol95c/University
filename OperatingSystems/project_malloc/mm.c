@@ -353,9 +353,23 @@ static inline void adjust_size(void *bp, size_t size) {
 
 static inline void *find_free(size_t size) {
   void *next = free_listp;
-  while (next && size > GET_SIZE(HDRP(next))) {
+  void *best = NULL;
+  size_t min = SIZE_MAX;
+  size_t cand_size;
+  while (next) {
+    cand_size = GET_SIZE(HDRP(next));
+    if (cand_size >= size) {
+      if (cand_size == size) {
+        return next;
+      }
+      if (cand_size - size < min && cand_size - size > MIN_BLKSIZE) {
+        best = next;
+        min = cand_size - size;
+      }
+    }
     next = next_free_blck(next);
   }
+  return best;
   return next;
 }
 
