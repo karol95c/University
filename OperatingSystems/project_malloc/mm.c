@@ -106,7 +106,6 @@ static char *heap_listp;
 static char *free_listp;
 static char *last_search;
 
-#define VERBOSE 0
 static size_t round_up(size_t size) {
   return (size + ALIGNMENT - 1) & -ALIGNMENT;
 }
@@ -160,27 +159,6 @@ static inline void set_nextptr(void *ptr, void *next) {
  */
 static inline void set_prevptr(void *ptr, void *prev) {
   WRITE_ADDR_TO(PREV_FREE_PTR(ptr), encode_ptr(prev));
-}
-
-/*
- * prints block information
- */
-void print_block_info(void *bp) {
-  if (!VERBOSE) {
-    return;
-  }
-  size_t size = GET_SIZE(HDRP(bp));
-  int32_t alloc = GET_ALLOC(HDRP(bp));
-
-  if (alloc) {
-    printf("block = %p, size = %ld, next_block = %p, prev_block = %p\n", bp,
-           size, NEXT_BLKP(bp), PREV_BLKP(bp));
-  } else {
-    printf("block = %p, size = %ld, next_block = %p, prev_block = %p, "
-           "next_free = %p, prev_free = %p\n",
-           bp, size, NEXT_BLKP(bp), PREV_BLKP(bp), next_free_block_addr(bp),
-           prev_free_block_addr(bp));
-  }
 }
 
 /*
@@ -272,39 +250,25 @@ static inline void *coalesce(void *bp) {
   unsigned int prev_allocated = GET_ALLOC(FTRP(PREV_BLKP(bp)));
   unsigned int next_allocated = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
   size_t size = GET_SIZE(HDRP(bp));
-  if (VERBOSE) {
-    printf("coalesce ");
-  }
+
   if (prev_allocated && next_allocated) {
-    if (VERBOSE) {
-      printf("case 1\n");
-    } /* Case 1 */
     add_to_free_list(bp);
     return bp;
   }
 
   else if (prev_allocated && !next_allocated) {
-    if (VERBOSE) {
-      printf("case 2\n");
-    } /* Case 2 */
     size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
     coalesce_next_free(size, bp);
     return (bp);
   }
 
   else if (!prev_allocated && next_allocated) {
-    if (VERBOSE) {
-      printf("case 3\n");
-    } /* Case 3 */
     size += GET_SIZE(HDRP(PREV_BLKP(bp)));
     coalesce_prev_free(size, bp);
     return (PREV_BLKP(bp));
   }
 
-  else { /* Case 4 */
-    if (VERBOSE) {
-      printf("case 4\n");
-    }
+  else {
     size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));
     coalesce_two_free(size, bp);
     return (PREV_BLKP(bp));
@@ -315,9 +279,6 @@ static inline void *coalesce(void *bp) {
  * extend_heap - add more heap space
  */
 static inline void *extend_heap(size_t words) {
-  if (VERBOSE) {
-    printf("extend_heap\n");
-  }
   void *bp;
   size_t size;
 
@@ -369,7 +330,6 @@ int mm_init(void) {
  */
 static inline void adjust_size(void *bp, size_t size) {
   void *next = NULL;
-  print_block_info(bp);
   size_t old_size = GET_SIZE(HDRP(bp));
   size_t new_size = old_size - size;
   if (new_size < MIN_BLKSIZE) {
@@ -389,7 +349,6 @@ static inline void adjust_size(void *bp, size_t size) {
   PUT(HDRP(next), PACK(old_size - size, 0));
   PUT(FTRP(next), PACK(new_size, 0));
   add_to_free_list(next);
-  mm_checkheap(VERBOSE);
 }
 
 /*
@@ -473,10 +432,6 @@ void *malloc(size_t size) {
  * free - add block to free block list and coalesce if possible
  */
 void free(void *ptr) {
-  if (VERBOSE) {
-    printf("FREE: %p\n", ptr);
-  }
-
   if (!ptr || !GET_ALLOC(HDRP(ptr)))
     return;
   size_t size = GET_SIZE(HDRP(ptr));
@@ -560,49 +515,7 @@ void *calloc(size_t nmemb, size_t size) {
   return new_ptr;
 }
 
-static void check_free_list(int verbose) {
-  void *next;
-  void *next_prev;
-  void *current;
-  void *prev;
-  if (!free_listp) {
-    if (verbose) {
-      printf("Start of free list is null\n");
-    }
-    return;
-  }
-  assert(GET_SIZE(HDRP(free_listp)) > 0);
-
-  next = free_listp;
-  current = free_listp;
-  prev = prev_free_block_addr(next);
-  next = next_free_block_addr(next);
-  while (next) {
-    size_t size = GET_SIZE(HDRP(next));
-    assert(size >= MIN_BLKSIZE);
-    next_prev = prev_free_block_addr(next);
-    if (verbose) {
-      // printblock(current);
-      printf("current = %p, size = %ld, next = %p, prev = %p, next_prev = %p\n",
-             current, size, next, prev, next_prev);
-    }
-    if (next_prev) {
-      assert(current == next_prev);
-    }
-    if (prev) {
-      assert(current != prev);
-    }
-    assert(current != next);
-    prev = prev_free_block_addr(next);
-    current = next;
-    next = next_free_block_addr(next);
-    if (verbose) {
-      printf("----------------------------------------------\n");
-    }
-  }
-}
-
 /*
  * mm_checkheap - So simple, it doesn't need a checker!
  */
-void mm_checkheap(int verbose) { check_free_list(verbose); }
+void mm_checkheap(int verbose) {}
