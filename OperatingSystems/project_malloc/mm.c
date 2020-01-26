@@ -2,6 +2,7 @@
  * Karol Cidyło 292419
  * My solution is based on boundary tags with headers and footers,
  * free blocks have also encoded pointers to prev and next free blocks
+ * I used macros from CSAPP book.
  *
  * Minimum size of block is 16, sizes of block are rounded up to multiple of 16
  *
@@ -10,6 +11,11 @@
  * s - size bit
  * a - allocation flag (1 - block is allocated, 0 - block is free)
  * we don't need last 3 bits for size(because size is rounded up to 16
+ * 
+ * Prologue and epilogue:
+ * At the beggining of heap there is created prologue header nad footer
+ * (both allocated and of size 8)
+ * At the end there is created epilogue (allocated of size 0)
  *
  * Free blocks:
  * header(4bytes) | [ next free(4bytes) | prev free (4 bytes) ] | footer(4bytes)
@@ -173,7 +179,6 @@ static inline void add_to_free_list(void *bp) {
   }
 
   void *root = free_listp;
-  // set_nextptr(bp, next);
   set_nextptr(bp, root);
   set_prevptr(root, bp);
   set_prevptr(bp, NULL);
@@ -282,15 +287,12 @@ static inline void *extend_heap(size_t words) {
   void *bp;
   size_t size;
 
-  /* Allocate an even number of words to maintain alignment */
   size = (words % 2) ? (words + 1) : words;
   size *= WORDSIZE;
   if ((bp = mem_sbrk(size)) == (void *)-1)
     return NULL;
-  /* Prologue header and footer */
-  PUT(HDRP(bp), PACK(size, 0)); /* free block header */
-  PUT(FTRP(bp), PACK(size, 0)); /* free block footer */
-                                /* epilogue header */
+  PUT(HDRP(bp), PACK(size, 0));
+  PUT(FTRP(bp), PACK(size, 0)); 
   PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));
 
   return coalesce(bp);
@@ -300,26 +302,24 @@ static inline void *extend_heap(size_t words) {
  * mm_init - Called when a new trace starts.
  */
 int mm_init(void) {
-  // code copied from CSAPP
+  /* his code is based on CSAPP's mm_init */
   if ((heap_listp = mem_sbrk(4 * WORDSIZE)) == (void *)-1)
     return -1;
   void *heap;
   PUT(heap_listp, 0);
   /* Alignment padding */
-  PUT(heap_listp + (1 * WORDSIZE), PACK(DSIZE, 1)); /* Prologue header */
-  PUT(heap_listp + (2 * WORDSIZE), PACK(DSIZE, 1)); /* Prologue footer */
-  PUT(heap_listp + (3 * WORDSIZE), PACK(0, 1));     /* Epilogue header */
-  // heap_listp += (2 * WORDSIZE);
+  /* Prologue header */
+  PUT(heap_listp + (1 * WORDSIZE), PACK(DSIZE, 1));
+  /* Prologue footer */
+  PUT(heap_listp + (2 * WORDSIZE), PACK(DSIZE, 1));
+  /* Epilogue header */
+  PUT(heap_listp + (3 * WORDSIZE), PACK(0, 1));
 
-  /* Extend the empty heap with a free block of CHUNKSIZE bytes */
   free_listp = NULL;
   last_search = NULL;
   heap = extend_heap(CHUNKSIZE / WORDSIZE);
   if (heap == NULL)
     return -1;
-
-  // heap_listp += WORDSIZE;
-  // dbg_printf("mm_init heap_listp %lx > ", (long)heap_listp);
 
   return 0;
 }
