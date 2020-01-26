@@ -82,6 +82,7 @@
 
 static char *heap_listp;
 static char *free_listp;
+static char *last_search;
 
 typedef struct {
   int32_t header;
@@ -188,7 +189,25 @@ static inline void add_to_free_list(void *bp) {
     return;
   }
 
-  assert(free_listp != bp);
+  // size_t size = GET_SIZE(HDRP(bp));
+  // void *next = next_free_block_addr(free_listp);
+  // void *prev = (void *)free_listp;
+
+  // while (next && GET_SIZE(HDRP(next)) < size)
+  // {
+  //   prev = next;
+  //   next = (void *)next_free_block_addr(next);
+  // }
+
+  // set_nextptr(bp, next);
+  // set_prevptr(bp, prev);
+  // set_nextptr(prev, bp);
+  // if (next)
+  // {
+  //   set_prevptr(next, bp);
+  // }
+
+  // assert(free_listp != bp);
   void *root = free_listp;
   // set_nextptr(bp, next);
   set_nextptr(bp, root);
@@ -210,12 +229,15 @@ static inline void add_to_free_list(void *bp) {
   // if (nextp != NULL) {
   //     PUT_ADDR(PREVP(nextp), bp);
   // }
-  mm_checkheap(VERBOSE);
+  // mm_checkheap(VERBOSE);
 }
 
 static inline void remove_from_free_list(void *bp) {
   void *next = next_free_block_addr(bp);
   void *prev = prev_free_block_addr(bp);
+  if (bp == last_search) {
+    last_search = next_free_block_addr(bp);
+  }
   if (prev) {
     set_nextptr(prev, next);
   } else {
@@ -347,6 +369,7 @@ int mm_init(void) {
 
   /* Extend the empty heap with a free block of CHUNKSIZE bytes */
   free_listp = NULL;
+  last_search = NULL;
   heap = extend_heap(CHUNKSIZE / WSIZE);
   if (heap == NULL)
     return -1;
@@ -383,7 +406,13 @@ static inline void adjust_size(void *bp, size_t size) {
 }
 
 static inline void *find_free(size_t size) {
-  void *next = free_listp;
+  if (!last_search) {
+    last_search = free_listp;
+  }
+  if (!free_listp) {
+    return NULL;
+  }
+  void *next = last_search;
   void *best = NULL;
   size_t min = SIZE_MAX;
   size_t cand_size;
@@ -399,9 +428,20 @@ static inline void *find_free(size_t size) {
       }
     }
     next = next_free_block_addr(next);
+    if (next == NULL) {
+      next = free_listp;
+    }
+    if (next == last_search) {
+      next = NULL;
+    }
   }
+  if (best) {
+    last_search = next_free_block_addr(best);
+  } else {
+    last_search = NULL;
+  }
+
   return best;
-  return next;
 }
 
 /*
