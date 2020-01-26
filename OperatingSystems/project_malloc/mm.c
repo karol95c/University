@@ -39,6 +39,7 @@
 #define calloc mm_calloc
 #endif /* def DRIVER */
 
+/* Macros used from CSAPP book. */
 /* Basic constants and macros */
 #define WSIZE 4             /* word size (bytes) */
 #define DSIZE 8             /* doubleword size (bytes) */
@@ -55,7 +56,7 @@
 #define GET(p) (*(unsigned int *)(p))
 #define PUT(p, val) (*(unsigned int *)(p) = (val))
 // #define PUT_ADDR(p, addr) (*(uint64_t *)(p) = (addr))
-#define PUT_ADDR(p, val) (*(int *)(p) = (int)(long)(val))
+#define PUT_ADDR(p, val) (*(uint32_t *)(p) = (uint32_t)(unsigned long)(val))
 
 // #define PUT_ADDR(p, val)    (*(int *)(p) = (int)(long)(val))
 
@@ -68,14 +69,16 @@
 #define FTRP(bp) ((char *)(bp) + GET_SIZE(HDRP(bp)) - DSIZE)
 
 /* Given block ptr bp, read address of its next/prev free block pointer */
-#define NEXTP(bp) ((int *)((char *)(bp)))
-#define PREVP(bp) ((int *)((char *)(bp) + WSIZE))
+#define NEXTP(bp) ((uint32_t *)((char *)(bp)))
+#define PREVP(bp) ((uint32_t *)((char *)(bp) + WSIZE))
+// #define NEXTP(bp) ((long *)((char *)(bp)))
+// #define PREVP(bp) ((long *)((char *)(bp) + DSIZE))
 
 /* Given block ptr bp, compute address of next and previous blocks */
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp)-WSIZE)))
 #define PREV_BLKP(bp) ((char *)(bp)-GET_SIZE(((char *)(bp)-DSIZE)))
 
-#define MIN_BLKSIZE 24
+#define MIN_BLKSIZE 16
 
 static char *heap_listp;
 static char *free_listp;
@@ -103,20 +106,48 @@ static inline void *offset2addr(int offset) {
   }
 }
 
-static inline void *next_free_blck(void *bp) {
-  int offset = *NEXTP(bp);
-  return offset2addr(offset);
+static inline uint32_t encode_ptr(void *bp) {
+  if (!bp) {
+    return 0;
+  }
+  uint32_t encoded = (char *)bp - heap_listp;
+  return encoded;
 }
 
-static inline void *prev_free_blck(void *bp) {
-  int offset = *PREVP(bp);
-  return offset2addr(offset);
+static inline void *decode_ptr(void *bp) {
+  uint32_t offset = *(uint32_t *)bp;
+  if (offset == 0) {
+    return NULL;
+  }
+  void *decoded = heap_listp + offset;
+  return decoded;
 }
 
+static inline void *next_free_block_addr(void *bp) {
+  // int offset = *NEXTP(bp);
+  // return offset2addr(offset);
+  return decode_ptr(NEXTP(bp));
+}
+
+static inline void *prev_free_block_addr(void *bp) {
+  // int offset = *PREVP(bp);
+  // return offset2addr(offset);
+  return decode_ptr(PREVP(bp));
+}
+
+// static inline void *next_free_block_addr(void *bp) {
+//   long addr = *NEXTP(bp);
+//   return (void *)addr;
+// }
+
+// static inline void *prev_free_block_addr(void *bp) {
+//   long addr = *PREVP(bp);
+//   return (void *)addr;
+// }
 // static size_t get_size(block_t *block) { return block->header & -4; }
 
 static inline void set_nextptr(void *ptr, void *next) {
-  PUT_ADDR(NEXTP(ptr), next);
+  PUT_ADDR(NEXTP(ptr), encode_ptr(next));
   // char_ptr = (char *)next;
   // (void) char_ptr;
 }
@@ -124,7 +155,7 @@ static inline void set_prevptr(void *ptr, void *prev) {
   // char *char_ptr = ((char *)ptr);
   // char_ptr = (char *)next;
   // (void) char_ptr;
-  PUT_ADDR(PREVP(ptr), prev);
+  PUT_ADDR(PREVP(ptr), encode_ptr(prev));
 }
 
 static inline bool is_epilogue(void *ptr) {
@@ -144,8 +175,8 @@ void print_block_info(void *bp) {
   } else {
     printf("block = %p, size = %ld, next_block = %p, prev_block = %p, "
            "next_free = %p, prev_free = %p\n",
-           bp, size, NEXT_BLKP(bp), PREV_BLKP(bp), next_free_blck(bp),
-           prev_free_blck(bp));
+           bp, size, NEXT_BLKP(bp), PREV_BLKP(bp), next_free_block_addr(bp),
+           prev_free_block_addr(bp));
   }
 }
 
@@ -170,7 +201,7 @@ static inline void add_to_free_list(void *bp) {
   //   nextp = NEXTP(nextp);
   // }
   // for (; nextp != NULL && GET_SIZE(HDRP(nextp)) < size; prevp = nextp, nextp
-  // = (char *)next_free_blck(nextp)) {
+  // = (char *)next_free_block_addr(nextp)) {
   // }
 
   // PUT_ADDR(NEXTP(bp), nextp);
@@ -183,8 +214,8 @@ static inline void add_to_free_list(void *bp) {
 }
 
 static inline void remove_from_free_list(void *bp) {
-  void *next = next_free_blck(bp);
-  void *prev = prev_free_blck(bp);
+  void *next = next_free_block_addr(bp);
+  void *prev = prev_free_block_addr(bp);
   if (prev) {
     set_nextptr(prev, next);
   } else {
@@ -312,7 +343,7 @@ int mm_init(void) {
   PUT(heap_listp + (1 * WSIZE), PACK(DSIZE, 1)); /* Prologue header */
   PUT(heap_listp + (2 * WSIZE), PACK(DSIZE, 1)); /* Prologue footer */
   PUT(heap_listp + (3 * WSIZE), PACK(0, 1));     /* Epilogue header */
-  heap_listp += (2 * WSIZE);
+  // heap_listp += (2 * WSIZE);
 
   /* Extend the empty heap with a free block of CHUNKSIZE bytes */
   free_listp = NULL;
@@ -320,7 +351,7 @@ int mm_init(void) {
   if (heap == NULL)
     return -1;
 
-  heap_listp += WSIZE;
+  // heap_listp += WSIZE;
   // dbg_printf("mm_init heap_listp %lx > ", (long)heap_listp);
 
   return 0;
@@ -367,7 +398,7 @@ static inline void *find_free(size_t size) {
         min = cand_size - size;
       }
     }
-    next = next_free_blck(next);
+    next = next_free_block_addr(next);
   }
   return best;
   return next;
@@ -550,12 +581,12 @@ static void check_free_list(int verbose) {
 
   next = free_listp;
   current = free_listp;
-  prev = prev_free_blck(next);
-  next = next_free_blck(next);
+  prev = prev_free_block_addr(next);
+  next = next_free_block_addr(next);
   while (next) {
     size_t size = GET_SIZE(HDRP(next));
     assert(size >= MIN_BLKSIZE);
-    next_prev = prev_free_blck(next);
+    next_prev = prev_free_block_addr(next);
     if (verbose) {
       // printblock(current);
       printf("current = %p, size = %ld, next = %p, prev = %p, next_prev = %p\n",
@@ -568,9 +599,9 @@ static void check_free_list(int verbose) {
       assert(current != prev);
     }
     assert(current != next);
-    prev = prev_free_blck(next);
+    prev = prev_free_block_addr(next);
     current = next;
-    next = next_free_blck(next);
+    next = next_free_block_addr(next);
     if (verbose) {
       printf("----------------------------------------------\n");
     }
