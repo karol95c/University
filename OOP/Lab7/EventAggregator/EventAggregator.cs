@@ -144,7 +144,6 @@ namespace MyApp
             form.ApplyEdit(notification.personEdited);
             form.ShowActivePersonView();
             form.UpdateTreeView();
-            // form.ShowPersonView(notification.personClicked.name, notification.personClicked.surname);
         }
 
         public void Handle(UserFileAddingFinished notification)
@@ -152,7 +151,6 @@ namespace MyApp
             form.AddNew(notification.personAdded);
             form.UpdateTreeView();
             form.ShowActiveListView();
-            // form.ShowPersonView(notification.personClicked.name, notification.personClicked.surname);
         }
     }
    public class EventAggregator : IEventAggregator

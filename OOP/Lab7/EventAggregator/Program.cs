@@ -42,11 +42,9 @@ namespace MyApp
     {
         internal System.Windows.Forms.TreeView treeView1;
         internal System.Windows.Forms.ListView listView1;
-        internal System.Windows.Forms.ListBox listBox1;
         internal System.Windows.Forms.Button buttonAdd;
         internal System.Windows.Forms.Button buttonEdit;
         internal System.Windows.Forms.FlowLayoutPanel panel1;
-        internal System.Windows.Forms.FlowLayoutPanel editpanel;
         // public event System.Windows.Forms.TreeNodeMouseClickEventHandler NodeMouseClick;
         private List<Field> fields;
         private EventAggregator ea;
@@ -77,18 +75,6 @@ namespace MyApp
             ea.RaiseNotification(new TreeViewClicked(e.Node.Text));
         }
 
-        public void listViewVisibility(bool visible)
-        {
-            Console.WriteLine("listViewVisibility");
-            listView1.Visible = visible;
-        }
-
-        public void listBoxVisibility(bool visible)
-        {
-            listBox1.Visible = visible;
-            Console.WriteLine("listBoxVisibility");
-        }
-
         public void addListItem(Person p)
         {
             string[] row = {p.surname, p.name, p.birthDate, p.address};
@@ -106,18 +92,13 @@ namespace MyApp
             this.treeView1.BackColor = this.BackColor;
             this.treeView1.Scrollable = true;
 
-            // Set the HideSelection property to false to keep the 
-            // selection highlighted when the user leaves the control. 
-            // This helps it blend with form.
             this.treeView1.HideSelection = true;
 
-            // Set the ShowRootLines and ShowLines properties to false to 
-            // give the TreeView a list-like appearance.
             this.treeView1.ShowRootLines = true;
             this.treeView1.ShowLines = true;
 
             // Add the nodes.
-                        TreeNode studentsNode = new TreeNode("Studenci");
+            TreeNode studentsNode = new TreeNode("Studenci");
             TreeNode teachersNode = new TreeNode("Wykładowcy");
             this.treeView1.Nodes.Add(studentsNode);
             this.treeView1.Nodes.Add(teachersNode);
@@ -187,17 +168,6 @@ namespace MyApp
             panel1.Visible = true;
 
             this.Controls.Add(this.panel1);
-
-
-            // listBox1 = new ListBox();
-            // // Set the size and location of the ListBox.
-
-            // listBox1.MultiColumn = false;
-            // // Set the selection mode to multiple and extended.
-            // listBox1.SelectionMode = SelectionMode.MultiExtended;
-
-            // this.Controls.Add(listBox1);
-            // listBox1.Visible = false;
         }       
 
         public void InitializeButtons()
