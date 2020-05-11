@@ -3,20 +3,8 @@ include  Test::Unit::Assertions
 
 # 1
 def palindrome?(input)
-    chars = input.gsub(/[^a-zA-Z]/, '').split('')
-    len = chars.length
-    if (0 == len)
-        if (input.length == 0)
-            return true
-        end
-        return false
-    end
-    for i in 0..(len/2)
-        if 0 != chars[i].casecmp(chars[len - i - 1])
-            return false
-        end
-    end
-    return true
+    chars = input.gsub(/[^a-zA-Z]/, '').downcase
+    chars == chars.reverse
 end
 
 class TestAdd < Test::Unit::TestCase
@@ -52,23 +40,23 @@ class TestAdd < Test::Unit::TestCase
 
     def test_add6
     	result = palindrome?("123212")
-    	assert_equal result, false
+    	assert_equal result, true
+    end
+
+    def test_add7
+    	result = palindrome?("1232125")
+    	assert_equal result, true
     end
 end
 
 #2
 def count_words(input)
-    counts = Hash.new
-    words2 = input.downcase.gsub(/[^a-zA-Z ]/, '')
-    words = words2.split(/\W+/)
-    for i in 0..words.length - 1
-        if false == counts.has_key?(words[i])
-            counts.store(words[i], 1)
-        else
-            counts[words[i]] = counts[words[i]] + 1
-        end
+    counts = Hash.new(0)
+    words = input.downcase.gsub(/[^a-zA-Z ]/, '').split(/\W+/)
+    for i in 0...words.length
+        counts[words[i]] += 1
     end
-    return counts
+    counts
 
 end
 
@@ -102,23 +90,14 @@ def same23?(input)
     a = 0
     b = 0
     c = 0
-    for i in 0..input.length - 1
-        if input[i] == "a"
-            a += 1
-        elsif input[i] == "b"
-            b += 1
-        elsif input[i] == "c"
-            c += 1
-        end
+    for i in 0...input.length
+        a += 1 if input[i] == "a"
+        b += 1 if input[i] == "b"
+        c += 1 if input[i] == "c"
     end
-    if (a == 3 && ( b == 2 || c ==2))
-        return true
-    elsif (b == 3 && ( a == 2 || c ==2))
-        return true
-    elsif (c == 3 && ( a == 2 || b ==2))
-        return true
-    end
-    return false
+    (a + b + c == 5) &&
+    (a == 3 || b == 3 || c == 3) &&
+    (a == 2 || b == 2 || c == 2)
 end
 
 class TestTwoThree < Test::Unit::TestCase
