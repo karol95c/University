@@ -1,9 +1,55 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace DependencyInjection
 {
+
+    [Serializable]
+    public class DependencyInterfaceException : Exception
+    {
+        public DependencyInterfaceException()
+        {
+        }
+
+        public DependencyInterfaceException(Type t)
+            : base(String.Format("Cannot create instance of interface: {0}", t.ToString()))
+        {
+        }
+    }
+
+    [Serializable]
+    public class DependencyTypeException : Exception
+    {
+        public DependencyTypeException()
+        {
+        }
+
+        public DependencyTypeException(Type t)
+            : base(String.Format("Cannot resolve instance of type: {0}", t.ToString()))
+        {
+        }
+    }
+
+    [Serializable]
+    public class DependencyCycleException : Exception
+    {
+        public DependencyCycleException()
+            : base("Cycle detected when resolving dependency.")
+        {
+        }
+    }
+
+    [Serializable]
+    public class DependencyConstructorException : Exception
+    {
+        public DependencyConstructorException()
+            : base("Too many constructors with DependencyConstrutor attribute.")
+        {
+        }
+    }
+
     public class DependencyConstrutor : Attribute
     {
     }  
@@ -11,6 +57,14 @@ namespace DependencyInjection
     {
     }   
 
+    public class DependencyProperty : Attribute
+    {
+    }   
+    public class DependencyMethod : Attribute
+    {
+    }  
+
+    
     public class SimpleContainer
     {
         enum RegisterMethod
@@ -23,6 +77,8 @@ namespace DependencyInjection
         private static Dictionary<Type, Type> map = new Dictionary<Type, Type>();
         private static Dictionary<Type, object> instances = new Dictionary<Type, object>();
         private static Dictionary<Type, RegisterMethod> methodMap = new Dictionary<Type, RegisterMethod>();
+
+        private List<Type> pathToResolve = new List<Type>();
 
         private void RegisterSingleton(bool Singleton, Type type)
         {
@@ -82,21 +138,21 @@ namespace DependencyInjection
         {
             if (methodMap.ContainsKey(typeof(T)))
             {
-                methodMap[typeof(T)] = RegisterMethod.MethodInstance;
-                
-                if (instances.ContainsKey(typeof(T)))
-                {
-                    instances[typeof(T)] = instance;
-                }
-                else
-                {
-                    instances.Add(typeof(T), instance);
-                }
+                methodMap[typeof(T)] = RegisterMethod.MethodInstance; 
             }
             else
             {
                 methodMap.Add(typeof(T), RegisterMethod.MethodInstance);
             }
+
+            if (instances.ContainsKey(typeof(T)))
+            {
+                instances[typeof(T)] = instance;
+            }
+            else
+            {
+                instances.Add(typeof(T), instance);
+            }    
         }
 
         public Type ResolveType(Type t)
@@ -108,49 +164,128 @@ namespace DependencyInjection
 
             if (t.IsInterface)
             {
-                throw new NotSupportedException("No matching type to interface registered.");
+                throw new DependencyInterfaceException(t);
             }
             return t;
         }
-        public T Resolve<T>()
+
+        // Return singleton instance, if there is no instance yet
+        // create new and cache.
+        public object GetSingleton(Type type)
+        {   
+            if (methodMap.ContainsKey(type))
+            {
+                methodMap[type] = RegisterMethod.MethodSingleton; 
+            }
+            else
+            {
+                methodMap.Add(type, RegisterMethod.MethodSingleton);
+            }
+    
+            if (instances.ContainsKey(type) && instances[type] != null)
+            {
+                return instances[type];
+            }
+            else
+            {
+                instances.Add(type, ResolveConcType(type));
+            }
+            return instances[type];
+        }
+
+        // Function to get instance of type if there is
+        // cached one.
+        public object TryGetInstance(Type type)
         {
-            bool singleton = false;
-            if (methodMap.ContainsKey(typeof(T)))
+            if (methodMap.ContainsKey(type))
             {
-                RegisterMethod m = methodMap[typeof(T)];
-                switch (m)
+                methodMap[type] = RegisterMethod.MethodInstance;
+                RegisterMethod m = methodMap[type];
+                if (m == RegisterMethod.MethodInstance)
                 {
-                    case RegisterMethod.MethodType : 
-                        break;
-                    case RegisterMethod.MethodInstance :
-                        return (T)instances[typeof(T)];
-                    case RegisterMethod.MethodSingleton :
-                        singleton = true;
-                        break;
-                    default :
-                        break;
+                    return instances[type];
                 }
-            }   
-            var resolve = ResolveType(typeof(T));
-            if (instances.ContainsKey(typeof(T)))
-            {
-                if (singleton && instances[typeof(T)] != null)
+                else if(m == RegisterMethod.MethodSingleton)
                 {
-                    return (T)instances[typeof(T)];
+                    return GetSingleton(type);
                 }
             }
+            return null; 
+        }
 
-            var constructors = resolve.GetConstructors();
-            var constructor = constructors[0];
+        private void FillParameterList(ref ParameterInfo[] parameters, ref List<object> resolvedParameters)
+        {
+            foreach (var item in parameters)
+            {
+                Type t = item.ParameterType;
+                if (methodMap.ContainsKey(t))
+                {
+                    object obj = TryGetInstance(t);
+                    if (null != obj)
+                    {
+                        resolvedParameters.Add(obj);
+                        continue;
+                    }
+                }
+                object resolved = ResolveConcType(t);
+                if (null != resolved)
+                {
+                    resolvedParameters.Add(resolved);
+                }
+            }
+        }
+
+        private void ResolveDependencyProperties(ref object result, ref PropertyInfo[] properties)
+        {
+            foreach (var p in properties)
+            {
+                if (p.GetCustomAttributes(typeof(DependencyProperty), false).Length > 0)
+                {
+                    // Resolve only if property has set accessor and value is not null
+                    MethodInfo setter = p.GetSetMethod();
+                    if (null != setter && null == p.GetValue(result))
+                    {
+                        Type toResolve = p.PropertyType;
+                        object resolved = ResolveConcType(toResolve);
+                        p.SetValue(result, resolved);
+                    }
+                }
+            }
+        }
+
+        private void ResolveDependencyMethods(ref object result, ref MethodInfo[] methods)
+        {
+            foreach (var m in methods)
+            {
+                if (m.GetCustomAttributes(typeof(DependencyMethod), false).Length > 0)
+                { 
+                    var parameters = m.GetParameters();
+                    if (parameters.Length > 0)
+                    {
+                        List<object> resolvedParameters = new List<object>();
+                        foreach (var p in parameters)
+                        {
+                            Type toResolve = p.ParameterType;
+                            resolvedParameters.Add(ResolveConcType(toResolve)); 
+                        }
+                        m.Invoke(result, resolvedParameters.ToArray());
+                    }
+                }
+            }
+        }
+        private void FindConstructor(ref ConstructorInfo[] constructors, ref ConstructorInfo constructor)
+        {
             int max = -1;
             bool dependency = false;
-
             foreach (var c in constructors)
             {
+                // If there is DependencyConstructor attribute pick this one
+                // (also check if there are no more with this attribute)
+                // otherwise pick constructor with longest parameter list.
                 bool dependencyConst = c.GetCustomAttributes(typeof(DependencyConstrutor), false).Length > 0;
                 if (dependency && dependencyConst)
                 {
-                    throw new NotSupportedException("No matching type to interface registered.");
+                    throw new DependencyConstructorException();
                 }
                 else if (dependencyConst)
                 {
@@ -163,33 +298,95 @@ namespace DependencyInjection
                     constructor = c; 
                 }              
             }
+        }
+    
+        private object ResolveConcType(Type type)
+        {
+            bool singleton = false;
 
-            var parameters = constructor.GetParameters();
-
-            List<object> resolvedParameters = new List<object>();
-
-            foreach (var item in parameters)
+            // If there is type in list alredy, cycle is detecded.
+            if (pathToResolve.Contains(type))
             {
-                Type t = item.ParameterType;
-                var method = typeof(T).GetMethod("Resolve");
-                if (method != null)
+                throw new DependencyCycleException();
+            }
+
+            pathToResolve.Add(type);
+
+            if (methodMap.ContainsKey(type))
+            {
+                RegisterMethod m = methodMap[type];
+                switch (m)
                 {
-                    var genericMethod = method.MakeGenericMethod(new Type[] {t});
-                    resolvedParameters.Add(genericMethod.Invoke(this, new object[]{}));
+                    case RegisterMethod.MethodType : 
+                        break;
+                    case RegisterMethod.MethodInstance :
+                        pathToResolve.Remove(type);
+                        return instances[type];
+                    case RegisterMethod.MethodSingleton :
+                        singleton = true;
+                        break;
+                    default :
+                        break;
+                }
+            }
+    
+            var resolve = ResolveType(type);
+            if (instances.ContainsKey(type))
+            {
+                if (singleton && instances[type] != null)
+                {
+                    pathToResolve.Remove(type);
+                    return instances[type];
+                }
+            }
+
+            var constructors = resolve.GetConstructors();
+            if (constructors.Length < 1)
+            {
+                if (resolve.IsValueType)
+                {
+                    pathToResolve.Remove(type);
+                    return Activator.CreateInstance(resolve);
                 }
                 else
                 {
-                    if (t.IsValueType)
-                        resolvedParameters.Add(Activator.CreateInstance(t));
+                    throw new DependencyTypeException(resolve);
                 }
             }
 
-            T result = (T)constructor.Invoke(resolvedParameters.ToArray());
-            if (singleton)
+            var constructor = constructors[0];
+            FindConstructor(ref constructors, ref constructor);
+            var parameters = constructor.GetParameters();
+
+
+            List<object> resolvedParameters = new List<object>();
+            FillParameterList(ref parameters, ref resolvedParameters);
+            
+            // Throw exception when not all parameters are resolved.
+            if (parameters.Length != resolvedParameters.Count)
             {
-                instances[typeof(T)] = result;
+                throw new DependencyTypeException(resolve);
             }
 
+            object result = constructor.Invoke(resolvedParameters.ToArray());
+            if (singleton)
+            {
+                instances[type] = result;
+            }
+
+            var properties = resolve.GetProperties();
+            ResolveDependencyProperties(ref result, ref properties);
+
+            var methods = resolve.GetMethods();
+            ResolveDependencyMethods(ref result, ref methods);
+        
+            pathToResolve.Remove(type);
+            return result;
+        }
+        public T Resolve<T>()
+        {   
+            pathToResolve.Clear();
+            object result = ResolveConcType(typeof(T));
             return (T)result;
         }
     }
@@ -199,18 +396,7 @@ namespace DependencyInjection
     {
         static void Main(string[] args)
         {
-            // SimpleContainer c = new SimpleContainer();
-            // IFoo fs = c.Resolve<Foo>();
-
-            // c.RegisterType<IFoo, Foo>(true);
-            // IFoo f1 = c.Resolve<IFoo>();
-            // IFoo f2 = c.Resolve<IFoo>();
-            // Console.WriteLine(f1==f2);
-            // Console.WriteLine(fs==f2);
-            // c.RegisterType<IFoo>( false );
-            // IFoo f3 = c.Resolve<IFoo>();
-            // Console.WriteLine(fs==f3);
-            // Console.WriteLine(f2==f3);
+            // Please check UnitTest1.cs
         }
     }
 }

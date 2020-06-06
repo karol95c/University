@@ -109,6 +109,60 @@ namespace DependencyInjection.Tests
 
     }
 
+    public class X
+    {
+        public X( Y d, string s)
+        {
+        }
+    }
+    public class Y {}
+
+    public class Round
+    {
+        private Cycle cycle;
+        public Round(Cycle cycle)
+        {
+            this.cycle = cycle;
+        }
+    }
+
+    public class Cycle
+    {
+        private Round round;
+        public Cycle(Round round)
+        {
+            this.round = round;
+        }
+    }
+
+    public class A
+    {
+        public B b;
+        public D d;
+        public A( B b )
+        {
+            this.b = b;
+        }
+        [DependencyProperty]
+        public C TheC { get; set; }
+        // wstrzykiwanie przez metodę
+        [DependencyMethod]
+        public void setD( D d )
+        {
+            this.d = d;
+        }
+    }
+    public class B { }
+
+    public class C {}
+    public class D {
+        [DependencyProperty]
+        public E TheE{ get; set; }
+    }
+
+    public class E {
+    }
+
     public class UnitTest1
     {
         [Fact]
@@ -173,7 +227,7 @@ namespace DependencyInjection.Tests
         public void NotCreateInsanceOfInterfeceIfNotRegistered()
         {
             SimpleContainer c = new SimpleContainer();
-            Assert.Throws<NotSupportedException>(() => c.Resolve<IFoo>());
+            Assert.Throws<DependencyInterfaceException>(() => c.Resolve<IFoo>());
 
             c.RegisterType<IFoo, Foo>(false);
             Foo f1 = c.Resolve<Foo>();
@@ -225,6 +279,70 @@ namespace DependencyInjection.Tests
 
             Assert.Equal(1, qux.getA());
             Assert.Equal(999, qux.getB());
+        }
+    
+        [Fact] 
+        public void ResolveStringParameter()
+        {
+            const String s1 = "ala ma kota";
+            SimpleContainer c = new SimpleContainer();
+            c.RegisterInstance<string>( s1 );
+            X x = c.Resolve<X>();
+            String s = c.Resolve<string>();
+            Assert.Equal(s1, s);
+        }
+
+        [Fact] 
+        public void NotResolveStringParameter()
+        {
+            SimpleContainer c1 = new SimpleContainer();
+            Assert.Throws<DependencyTypeException>(() => c1.Resolve<X>());
+            int p = c1.Resolve<int>();
+        }
+
+        
+        [Fact]
+        public void ResolveDependency()
+        {
+            SimpleContainer c = new SimpleContainer();
+            A a = c.Resolve<A>();
+        }
+
+        [Fact] 
+        public void ThrowExceptionOnCircle()
+        {
+            SimpleContainer c = new SimpleContainer();
+            Assert.Throws<DependencyCycleException>(() => c.Resolve<Cycle>());
+        }
+
+        [Fact] 
+        public void DependencyPropertyShouldBeResolved()
+        {
+            SimpleContainer c = new SimpleContainer();
+            A a = c.Resolve<A>();
+            Assert.NotNull(a.TheC);
+            Type cType = a.TheC.GetType();
+            Assert.Equal(typeof(C), cType);
+        }
+
+        [Fact] 
+        public void DependencyMethodShouldBeResolved()
+        {
+            SimpleContainer c = new SimpleContainer();
+            A a = c.Resolve<A>();
+            Assert.NotNull(a.d);
+            Type dType = a.d.GetType();
+            Assert.Equal(typeof(D), dType);
+        }
+
+        [Fact] 
+        public void DependencyMethodAndPropertyShouldBeResolved()
+        {
+            SimpleContainer c = new SimpleContainer();
+            A a = c.Resolve<A>();
+            Assert.NotNull(a.d.TheE);
+            Type eType = a.d.TheE.GetType();
+            Assert.Equal(typeof(E), eType);
         }
     }
 }
