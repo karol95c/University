@@ -389,6 +389,17 @@ namespace DependencyInjection
             object result = ResolveConcType(typeof(T));
             return (T)result;
         }
+
+        public void BuildUp<T>( T Instance )
+        {
+            Type t = typeof(T);
+            var properties = t.GetProperties();
+            object o = (object) Instance;
+            ResolveDependencyProperties(ref o, ref properties);
+
+            var methods = t.GetMethods();
+            ResolveDependencyMethods(ref o, ref methods);
+        }
     }
 
 

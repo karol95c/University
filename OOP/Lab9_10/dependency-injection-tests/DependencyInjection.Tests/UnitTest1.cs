@@ -344,5 +344,29 @@ namespace DependencyInjection.Tests
             Type eType = a.d.TheE.GetType();
             Assert.Equal(typeof(E), eType);
         }
+
+        [Fact] 
+        public void BuildUpObject()
+        {
+            SimpleContainer c = new SimpleContainer();
+            A a = new A(new B());
+    
+            Assert.Null(a.TheC);
+    
+            c.BuildUp(a);
+    
+            Assert.NotNull(a.TheC);
+            Type cType = a.TheC.GetType();
+            Assert.Equal(typeof(C), cType);
+    
+            Assert.NotNull(a.d);
+            Type dType = a.d.GetType();
+            Assert.NotNull(a.d.TheE);
+            Assert.Equal(typeof(D), dType);
+
+            Assert.NotNull(a.d.TheE);
+            Type eType = a.d.TheE.GetType();
+            Assert.Equal(typeof(E), eType);
+        }
     }
 }
