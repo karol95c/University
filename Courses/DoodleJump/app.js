@@ -10,6 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let upTimerId
     let downTimerId
     let isJumping = true
+    let isGoingLeft = false
+    let isGoingRight = false
+    let leftTimerId
+    let rightTimerId
+    let score = 0
+
+    const HEIGHT = 600
 
     class Platform {
         constructor (newPlatformBottom) {
@@ -35,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createPlatforms() {
         for (let i = 0; i < platformCount; i++) {
-            let platformGap = 600 / platformCount
+            let platformGap = HEIGHT / platformCount
             let newPlatformBottom = 100 + i * platformGap
             let newPlatform = new Platform(newPlatformBottom)
             platforms.push(newPlatform)
@@ -48,6 +55,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 platform.bottom -=4
                 let visual = platform.visual
                 visual.style.bottom = platform.bottom + 'px'
+                
+                if (platform.bottom < 10) {
+                    let firstPlatform = platforms[0].visual
+                    firstPlatform.classList.remove('platform')
+                    platforms.shift()
+                    score++
+                    let newPlatform = new Platform(HEIGHT)
+                    platforms.push(newPlatform)
+                }
             })
         }
     }
@@ -87,23 +103,75 @@ document.addEventListener('DOMContentLoaded', () => {
                       }
             })
         }, 30)
-
     }
     
+    function clearIntervals() {
+        clearInterval(upTimerId)
+        clearInterval(downTimerId)
+        clearInterval(leftTimerId)
+        clearInterval(rightTimerId)
+    }
+
     function gameOver() {
         console.log('GAME OVER!')
         isGameOver = true
-        clearInterval(upTimerId)
-        clearInterval(downTimerId)
+
+        while (grid.firstChild) {
+            grid.removeChild(grid.firstChild)
+        }
+        grid.innerHTML = score 
+        clearIntervals()
     }
+
+    function moveLeft() {
+        if (isGoingRight) {
+            clearInterval(rightTimerId)
+            isGoingRight = false
+        }
+
+        isGoingLeft = true
+        leftTimerId = setInterval(function () {
+            if (doodlerLeftSpace >= 0) {
+                doodlerLeftSpace -=5
+                doodler.style.left = doodlerLeftSpace + 'px'
+            } else {
+                moveRight()
+            }
+        }, 30)
+    }
+
+    function moveRight() {
+        if (isGoingLeft) {
+            clearInterval(leftTimerId)
+            isGoingLeft = false
+        }
+
+        isGoingRight = true
+        rightTimerId = setInterval(function () {
+            if (doodlerLeftSpace <= 340) {
+                doodlerLeftSpace += 5
+                doodler.style.left = doodlerLeftSpace + 'px'
+            } else {
+                moveLeft()
+            }
+        }, 30)
+    }
+
+    function moveStraight() {
+        isGoingLeft = false
+        isGoingRight = false
+        clearInterval(leftTimerId)
+        clearInterval(rightTimerId)
+    }
+
 
     function control(e) {
         if (e.key === "ArrowLeft") {
-
+            moveLeft()
         } else if (e.key === "ArrowRight") {
-            
+            moveRight()
         } else if (e.key === "ArrowUp") {
-            
+            moveStraight()
         }
     }
 
@@ -113,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             createDoodler()
             setInterval(movePlatforms, 30)
             jump()
+            document.addEventListener('keyup', control)
         }
     }
 
