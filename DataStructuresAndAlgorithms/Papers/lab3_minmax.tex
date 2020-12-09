@@ -1,0 +1,109 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{tabto}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\selectlanguage{polish}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{MnSymbol}
+\author{Karol Cidyło}
+\title {Zadanie 2 z listy 3.}
+\usetikzlibrary{matrix}
+\begin{document}
+Karol Cidyło \newline \newline \newline
+Zadanie 2 z listy 3. \newline \newline
+\textbf{Algorytm} \newline
+\begin{lstlisting}
+Procedure MaxM in(S:set)
+if |S|= 1 then return {a1, a1}
+else
+    if |S|= 2 then return (max(a1, a2), min(a1, a2))
+    else
+        podziel S na dwa rownoliczne (z dokladnoscia do jednego elementu)
+        podzbiory S1, S2
+        (max1, min1) <- MaxM in(S1)
+        (max2, min2) <- MaxM in(S2)
+        return (max(max1, max2), min(min1, min2))
+        
+
+.
+\end{lstlisting}
+$T(n) = T(\lfloor \frac{n}{2} \rfloor) + T(\lceil \frac{n}{2}\rceil) + 2$ \newline \newline
+\textbf{Lemat} \newline
+Weźmy $ n = 2^i +k$, gdzie $k < 2^i$: \newline
+$$T(n) =  \begin{cases} 
+      \frac{3}{2} 2^i - 2 + 2k & \text{jeśli } k\leq 2^{i-1} \\
+      2 \cdot 2^{i} - 2 + k & \text{jeśli } k > 2^{i-1} 
+   \end{cases}
+$$
+\textbf{Dowód indukcyjny po i} \newline
+Mając $ n = 2^i +k$, gdzie $k < 2^i$: \newline
+\begin{enumerate}
+	\item \textbf{Podstawa:} \newline
+		Dla i = 1
+		\begin{enumerate}[label=(\Alph*)]
+		\item k = 0. $T(2^1 + 0) = T(2) = 3 \cdot 1 + 2 \cdot 0 - 2 = 1 $ 
+		\item k = 1. $T(2^1 + 0) = T(2) = 3 \cdot 1 + 2 \cdot 1 - 2 =3 $
+		\end{enumerate}
+	\item \textbf{Założenie:} \newline
+	Załóżmy, że dla i - 1 jest to spełnione, czyli dla $\frac{n}{2} = \frac{2^{i-1} + k} {2}$
+	\item \textbf{Krok indukcyjny:} \newline
+	\begin{enumerate}[label=(\Alph*)]
+		\item $k \leq 2^{i-1}$ \newline 
+			$\frac{n}{2} = \frac{2^{i-1} + k}{2}$ \newline
+			$\lceil \frac{n}{2} \rceil = 2^{i-1} + \lceil \frac{k}{2} \rceil$ \newline
+			$\lceil \frac{k}{2} \rceil \leq 2^{i-2}$, $\lfloor \frac{k}{2} \rfloor \leq 2^{i-2}$ \newline
+			$T(n) = T(\lfloor \frac{n}{2} \rfloor) + T(\lceil \frac{n}{2}\rceil) + 2 = \newline 
+			= \frac{3}{2} 2^{i-1} - 2 + 2\lfloor \frac{k}{2} \rfloor + \frac{3}{2} 2^{i-1} - 2 + 2\lceil \frac{k}{2} \rceil +  				2 = \frac{3}{2} 2^i - 2 + 2k$
+		\item $k > 2^{i-1}$ \newline
+			$ 2^{i-1} \less \lceil \frac{k}{2} \rceil \less 2^{i+1}$ , $ 2^{i-1} \less \lfloor \frac{k}{2} \rfloor \less 2^{i+1}$   \newline
+			$T(n) = T(\lfloor \frac{n}{2} \rfloor) + T(\lceil \frac{n}{2}\rceil) + 2 = T(\lfloor \frac{2^i + k }{2} \rfloor) + T(\lceil \frac{2^i + k }{2}\rceil) + 2 = \newline
+			= 4\cdot2^{i-2} + \lfloor \frac{k}{2} \rfloor - 2 +   4\cdot2^{i-2}+ \lceil \frac{k}{2}\rceil -2 + 2 =   2\cdot2\cdot(2^{i-2} + 2^{i-2})  + k - 2 = \newline
+			=  2 \cdot 2^{i} - 2 + k$ \newline
+		\end{enumerate}
+	\end{enumerate}
+\begin{flushright}
+\qedsymbol 
+\end{flushright}
+		Oznaczmy przez G(n) funkcję, która wyznacza różnicę w liczbie porównań. W takim razie: \newline
+		$$ G(n) = T(n) - \lceil \frac{3}{2} n - 2 \rceil $$ \newline
+		Podstawiając $ n = 2^i +k$ otrzymujemy: \newline 
+		$$ G(n) = T(n) - \lceil \frac{3}{2} 2^i + \frac{3}{2} k - 2 \rceil = T(n) - \frac{3}{2} 2^i + 2 - \lceil \frac{3}{2} k \rceil$$ \newline
+		Wykorzystując $T(n)$ z lematu mamy:\newline
+		
+		$$G(n) = \begin{cases}
+		    \lfloor \frac{k}{2} \rfloor & \text{jeśli } k\leq 2^{i-1} \\
+		    2^{i - 1} - \lceil \frac{k}{2} \rceil & \text{jeśli } k > 2^{i-1} 
+	    \end{cases}
+		$$
+\begin{itemize}
+	\item Wartości dla, których algorytm wykonuje $\lceil \frac{3}{2} n - 2 \rceil $ porównań: \newline
+	To są te wartości k, dla których $G(n) == 0$, czyli {0, 1, $2^i-1$}. \newline
+	\item Maksymalna różnica ($G(n)$) jest wtedy, gdy $ k = 2^{i-1}$ czyli: $G(n) = 2^{i-2}$ \newline
+	$n = 2^i + k = 2^i + 2^{i-1}$ \newline
+	$G(n) = \frac{n}{6}$\newline
+	\item
+	\begin{lstlisting}
+Procedure MaxM in(S:set)
+if |S|= 1 then return {a1, a1}
+else
+    if |S|= 2 then return (max(a1, a2), min(a1, a2))
+    if |S| mod 2 == 0 and |S|/2 mod == 1
+        podziel S na dwa zbiory o liczbie elementow:
+        |S|/2 + 1 oraz |S|/2 - 1
+    else
+        podziel S na dwa rownoliczne 
+        (z dokladnoscia do jednego elementu)
+        podzbiory S1, S2
+    (max1, min1) <- MaxM in(S1)
+    (max2, min2) <- MaxM in(S2)
+    return (max(max1, max2), min(min1, min2))
+\end{lstlisting}
+\end{itemize}
+		
+\end{document}

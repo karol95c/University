@@ -1,0 +1,61 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{tabto}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\selectlanguage{polish}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{MnSymbol}
+\usepackage{graphicx}
+\author{Karol Cidyło}
+\title {Zadanie 8 z listy 4.}
+\usetikzlibrary{matrix}
+\begin{document}
+Karol Cidyło \newline \newline \newline
+Zadanie 8 z listy 4. \newline \newline
+Mamy szachownice o rozmiarze 4 x n. \newline
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{4xn.jpg}
+  \caption{Szachownica 4 x n.}
+  \label{fig:boat1}
+\end{figure}
+
+
+Zadaniem jest  rozmieszczenia na szachownicy kamyków tak, żeby na każdym polu znajdował się co najwyżej jeden kamień oraz pola szachownicy, na których są kamienie nie mogą mieć wspólnych krawędzi. Uznajmy, że na szachownicy jest kamień jeśli pole ma wartość 1, w przeciwnym przypadku 0. Możemy zauważyć, że jeżeli jeden wymiar szachownicy to 4, wtedy możlwe rozmieszczenia kamieni można wyrazić za pomocą następujących masek bitowych: \newline
+0 0 0 0 \newline
+0 0 0 1 \newline
+0 0 1 0 \newline
+0 1 0 0 \newline
+0 1 0 1 \newline
+1 0 0 0 \newline
+1 0 0 1 \newline
+1 0 1 0 \newline  \newline
+Mamy ich konkretnie 8.\newline \newline
+\textbf{Algorytm}\newline
+Rozwiązaniem jest stworzenie szachownicy 8 x n(Rysunek 2), gdzie s[i][j] będzie mówić jaka jest maksymalna wartość szachownicy utworzonej przez pierwsze \textbf{i}  kolumn przy ustawieniu \textbf{j} kolumny \textbf{i}. Czyli mając wymiar 8 zawieramy każdą możliwą maske.
+\begin{figure}[h!]
+  \includegraphics[width=\linewidth]{8xn.jpg}
+  \caption{Szachownica 8 x n.}
+  \label{fig:boat2}
+\end{figure}
+$$
+s[i][j] = \left\{ \begin{array}{ll}
+0 & \textrm{gdy $i < 0$}\\
+max_{k=poprawne(j)}( s[i-1][k] + zysk(i, k)) & \textrm{w.p.p.}
+\end{array} \right.
+$$\newline
+Funkcja  \textbf{poprawne(j)} zwraca możliwe maski(ustawienia kamieni) tak, aby były zachowane wytyczne zadania. Dla masek jest to po prostu sytuacja gdzie ustawiając dwie jedna pod drugą w żadnej kolumnie z wyrażenia \textbf{a} \& \textbf{b} nie otrzymujemy 1, gdzie \textbf{a} jest wartością z wiersza pierwszego, \textbf{b} z drugiego. Algorytm ten można zaimplementować jako automat, mamy skończoną i znaną liczbę masek zgodnych między sobą. Drugim sposobem jest implementacja zgodnych masek jako listy dla każdej z 8 dostępnych. Można zauważyć, że tylko dla maski zerowej ( 0 0 0 0) mamy 7 możliwości, dla innych będzie mniej. \newline
+ \textbf{zysk(i, k)} jest to zysk jaki otrzymamy z ustawienia kamieni w kolumnie \textbf{i}-tej przy masce \textbf{k}. To rozwiązujemy za pomocą sumy mnożeń kolejnych wartości maski z wartościami w kolumnie \textbf{i}-tej. \newline \newline
+Wynikiem jest $max_{k=0..7}s[n][k]$. \newline \newline
+\textbf{Złożoność obliczeniowa} \newline
+Wynik mamy w s[n][k] dla k=0..7, więc musimy przejść całą tablicę 4 x n. Dla każdego elementu ustawienie zgodnych masek możemy ustalić w czasie stałym. Dla każdego pola musimy też wybrać maks z jednego z 8 pól, jednak będzie to średnio mniej, ponieważ nie wszystkie są ze soba zgodne. Także złożoność tego algorytmu to \textbf{O(n)}. \newline \newline
+\textbf{Złożoność pamięciowa.} \newline
+Tablica 8 x n oraz ewentualna pamięć na pamiętanie wartości w aktualnie sprawdzanej kolumnie oraz listy zgodnych masek.  \textbf{O(n)}.
+
+
+\end{document}

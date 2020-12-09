@@ -1,0 +1,305 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;  
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Drawing;
+
+using System.Diagnostics;
+
+namespace MyApp
+{
+    // static class Program
+    // {
+    //     /// <summary>
+    //     ///  The main entry point for the application.
+    //     /// </summary>
+    //     [STAThread]
+    //     static void Main()
+    //     {
+    //         Application.SetHighDpiMode(HighDpiMode.SystemAware);
+    //         Application.EnableVisualStyles();
+    //         Application.SetCompatibleTextRenderingDefault(false);
+    //         Application.Run(new Form1());
+    //     }
+    // }
+
+
+    public class MyForm : Form
+    {
+        internal System.Windows.Forms.TreeView treeView1;
+        internal System.Windows.Forms.ListView listView1;
+        internal System.Windows.Forms.ListBox listBox1;
+        public event System.Windows.Forms.TreeNodeMouseClickEventHandler NodeMouseClick;
+        private EventAggregator ea;
+        private FileList students;
+        private FileList teachers;
+        public MyForm(EventAggregator e)
+        {
+            InitComponents();
+            addListItem(new Person("a", "b", "c", "d"));
+            ea = e;
+        }
+
+        void treeView1_NodeMouseClick(object sender,  
+        TreeNodeMouseClickEventArgs e)
+        {
+            ea.RaiseNotification(new TreeViewPersonClicked());
+        }
+
+        public void addListItem(Person p)
+        {
+            string[] row = {p.surname, p.name, p.birthDate, p.address};
+            var listViewItem = new ListViewItem(row);
+            this.listView1.Items.Add(listViewItem);
+        }
+        
+        private void InitializeTreeView()
+        {
+            this.treeView1 = new System.Windows.Forms.TreeView();
+            this.treeView1.Location = new System.Drawing.Point(0, 0);
+            this.treeView1.Size = new System.Drawing.Size(200, ClientSize.Height);
+
+
+            this.treeView1.BorderStyle = BorderStyle.FixedSingle;
+            this.treeView1.BackColor = this.BackColor;
+            this.treeView1.Scrollable = true;
+
+            // Set the HideSelection property to false to keep the 
+            // selection highlighted when the user leaves the control. 
+            // This helps it blend with form.
+            this.treeView1.HideSelection = true;
+
+            // Set the ShowRootLines and ShowLines properties to false to 
+            // give the TreeView a list-like appearance.
+            this.treeView1.ShowRootLines = true;
+            this.treeView1.ShowLines = true;
+
+            // Add the nodes.
+            this.treeView1.Nodes.AddRange(new TreeNode[]
+                {new TreeNode("Studenci", 
+                    new TreeNode[]{
+                    new TreeNode("Jan Kochanowski"), 
+                    new TreeNode("Tomasz Makowski")}), 
+                new TreeNode("Wykładowcy", 
+                    new TreeNode[]{
+                        new TreeNode("Krzysztof Silor"),
+                        new TreeNode("Jerzy Tomaszewski")})
+                });
+
+            this.treeView1.TabIndex = 0;
+        }
+        public void InitializeListView()
+        {
+            listView1 = new ListView();
+            this.listView1.Location = new System.Drawing.Point(treeView1.Width , 0);
+            this.listView1.Size = new System.Drawing.Size(ClientSize.Width - treeView1.Width, ClientSize.Height);
+            // listView1.Bounds = new Rectangle(new Point(10,10), new Size(300,200));
+
+            // Set the view to show details.
+            listView1.View = View.Details;
+            // Allow the user to edit item text.
+            listView1.LabelEdit = true;
+            // Allow the user to rearrange columns.
+            listView1.AllowColumnReorder = false;
+            // Display check boxes.
+            listView1.CheckBoxes = false;
+            // Select the item and subitems when selection is made.
+            listView1.FullRowSelect = true;
+            // Display grid lines.
+            listView1.GridLines = true;
+            // Sort the items in the list in ascending order.
+            listView1.Sorting = SortOrder.Ascending;
+
+            // Create columns for the items and subitems.
+            // Width of -2 indicates auto-size.
+            listView1.Columns.Add("Nazwisko", -2, HorizontalAlignment.Left);
+            listView1.Columns.Add("Imię", -2, HorizontalAlignment.Left);
+            listView1.Columns.Add("Data urodzenia", -2, HorizontalAlignment.Left);
+            listView1.Columns.Add("Adres", -2, HorizontalAlignment.Center);
+        }
+
+        public void InitializeListBox()
+        {
+            listBox1 = new ListBox();
+            // Set the size and location of the ListBox.
+            this.listBox1.Location = new System.Drawing.Point(treeView1.Width , 0);
+            this.listBox1.Size = new System.Drawing.Size(200, 200);
+
+            listBox1.MultiColumn = false;
+            // Set the selection mode to multiple and extended.
+            listBox1.SelectionMode = SelectionMode.MultiExtended;
+        }
+
+        private void InitComponents()
+        {
+            Text = "Kartoteka";
+            ClientSize = new Size(800, 450);
+
+            // flowPanel.Controls.Add(button);
+            // flowPanel.Controls.Add(button2);
+            // Controls.Add(flowPanel);
+            // Set the tab index and add the TreeView to the form.
+            InitializeTreeView();
+            this.Controls.Add(this.treeView1);
+            InitializeListView();
+            // Add the ListView to the control collection.
+            this.Controls.Add(this.listView1);
+            InitializeListBox();
+            this.Controls.Add(listBox1);
+            listBox1.Visible = false;
+            CenterToScreen();
+
+        }
+
+        // [STAThread]
+        static void Main()
+        {
+        //     TextWriterTraceListener myWriter = new TextWriterTraceListener(System.Console.Out);
+        // Debug.Listeners.Add(myWriter);
+            Trace.WriteLine("aaa");
+            // Application.SetHighDpiMode(HighDpiMode.SystemAware);
+            // Application.EnableVisualStyles();
+
+            // EventAggregator ea = new EventAggregator();
+            // MyForm form = new MyForm(ea);
+            // Application.Run(form);
+            // Editor editor = new Editor(form);
+            // ea.RegisterSubscriber<TreeViewPersonClicked>(editor);
+            // ea.RaiseNotification(new TreeViewPersonClicked());
+        }
+    }
+
+    public class Person
+    {
+        public string surname;
+        public string name;
+        public string birthDate;
+        public string address;
+
+        public Person(string s, string n, string b, string a)
+        {
+            this.surname = s;
+            this.name = n;
+            this.birthDate = b;
+            this.address = a;
+        }
+    }
+    public class FileList
+    {
+        private List<Person> data;
+
+        public void Add(Person person)
+        {
+            data.Add(person);
+        }
+
+        public void Delete (int index)
+        {
+            data.RemoveAt(index);
+        }
+
+        public void Edit (int index)
+        {
+
+        }
+    }
+
+    public class TreeViewPersonClicked
+    {
+        public Person personData {get; set;}
+        
+    }
+
+    public class TreeViewCategoryClicked
+    {
+
+    }
+
+    public class UserFileAddClicked
+    {
+        
+    }
+
+    public class UserFileEditClicked
+    {
+        
+    }
+
+    
+    public interface ISubscriber<T>
+    {
+        void Handle( T Notification );
+    }
+    public interface IEventAggregator
+    {
+        void RegisterSubscriber<T>( ISubscriber<T> Subscriber );
+        void RemoveSubscriber<T>( ISubscriber<T> Subscriber );
+        void RaiseNotification<T>( T Event );
+    }
+    
+    public class Editor :
+        ISubscriber<TreeViewPersonClicked>,
+        ISubscriber<TreeViewCategoryClicked>,
+        ISubscriber<UserFileAddClicked>,
+        ISubscriber<UserFileEditClicked>
+    {
+        public MyForm form;
+
+        public Editor (MyForm f)
+        {
+            form = f;
+
+        }
+
+        public void Handle(TreeViewPersonClicked notification)
+        {
+            Console.WriteLine("handle");
+            string name = notification.personData.name;
+            form.listBox1.Visible = true;
+            form.listView1.Visible = false;
+        }
+
+        public void Handle(TreeViewCategoryClicked notification)
+        {
+
+        }
+
+        public void Handle(UserFileAddClicked notification)
+        {
+
+        }
+
+        public void Handle(UserFileEditClicked notification)
+        {
+
+        }
+    }
+   public class EventAggregator : IEventAggregator
+    {
+        Dictionary<Type, List<object>> _subscribers =
+        new Dictionary<Type, List<object>>();
+        #region IEventAggregator Members
+        public void RegisterSubscriber<T>( ISubscriber<T> Subscriber )
+        {
+            if (!_subscribers.ContainsKey( typeof( T ) ))
+                _subscribers.Add( typeof( T ), new List<object>() );
+                _subscribers[typeof( T )].Add( Subscriber );
+        }
+        public void RemoveSubscriber<T>( ISubscriber<T> Subscriber )
+        {
+            if (_subscribers.ContainsKey( typeof( T ) ))
+                _subscribers[typeof( T )].Remove( Subscriber );
+        }
+         public void RaiseNotification<T>( T Event )
+        {
+            if (_subscribers.ContainsKey( typeof( T ) ))
+                foreach (ISubscriber<T> subscriber in
+                    _subscribers[typeof( T )].OfType<ISubscriber<T>>())
+                    subscriber.Handle( Event );
+        }
+        #endregion
+ }
+}

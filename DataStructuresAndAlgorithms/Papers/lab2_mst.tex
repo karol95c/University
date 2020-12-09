@@ -1,0 +1,73 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage{tabto}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\selectlanguage{polish}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\author{Karol Cidyło}
+\title {Zadanie 6 z listy 1.}
+\usetikzlibrary{matrix}
+\begin{document}
+Karol Cidyło \newline \newline \newline
+Zadanie 6 z listy 2. \newline \newline
+Lemat cycle property. \newline
+Weźmy cykl C w grafie. Jeśli waga krawędzi e z C jest największą wagą spośród krawędzi cyklu (z pozostałych wierzchołków zbioru C) wtedy ta krawędź nie należy do MST. \newline \newline
+Dowód: \newline
+Załóżmy, że e należy do MST $T_1$, usunięcie e powoduję cięcie $T_1$ na dwa poddrzewa z dwoma końcami e w różnych poddrzewach.\newline Skoro mieliśmy cykl to możemy znealeźć krawędź f z C, która połączy nam nasze początkowe drzewo. Jeśli e jest maksymalne to w(f) < w(e), więc zastępując krawędź e przez krawędź f dostajemy MST $T_2$ o mniejszejs wadze niż MST $T_1$.  \newline \newline
+Idea algorytmu:
+Weźmy krawędź e($v_1$, $v_2$). Zapiszmy wagę i usuńmy z grafu. \newline
+Używając zmienionego DFS przejdziemy krawędzie pod warunkiem, że mają one mniejszą wagę od zapamiętanej wagi krawędzi e($v_1$, $v_2$). Jeśli zaczniemy z $v_1$ i dotrzemy do $v_2$ to znaczy, że e należało do cyklu i w(e) było największą wagą z cyklu(przchodziliśmy tylko krawędzie mniejsze od w(e), dodając e stworzymy cyjl). Korzystając z cycle property wiemy, że e nie należy do MST. Jeśl przejdziemy cały graf(poza krawędzią e) i i nie dotrzemy do $v_2$ to znaczy, że e należy do MST. \newline \newline
+Pseudokod: \newline
+\begin{lstlisting}
+maks_waga = waga(e)
+
+dfs(v_start, v_koniec):
+    dla kazdego sasiada u wierzcholka v_start:
+        jesli (u == v_koniec) zwroc falsz
+        jesli odwiedzony[u] == 0 i waga(e(v,u))< maks_waga
+        dfs(u, v_koniec)
+    zwroc prawda
+    
+
+\end{lstlisting}
+Algorytm działa w czasie O(n+m) tak jak tradycyjny dfs. Przchodzimy każdą krawędź  oraz wierzchołek raz.  \newline 
+Może nawet zakończyć się szybciej, jeśli dojdziemy do wierzchołka $v_2$. \newline\newline
+Poniżej zamieszczam dokładniejszą implementację wykorzystującą listę sąsiedztwa wierzchołków w grafie 
+oraz iteracyjnego dfs-a, według mnie jest to najlepsze rozwiązanie, ponieważ pozwala łatwo zakończyć działanie 
+po dotarciu do żądanego wierzchołka.\newline
+Przepraszam za niespójność w języku wyrażeń. Niżej używam angielskiego, ponieważ kod naturalniej pisze mi się używając angielskich nazw oraz zwrotów.
+\newpage
+\begin{lstlisting}
+dfs(e):
+    max_weight = weight(e)
+    stack.push(e.start)
+	
+    while (!stack.empty())
+    {
+        s = stack.top();
+        stack.pop();
+		
+        if (!visited[s])
+        {
+            visited[s] = true;
+        }
+		
+        for (auto i = adj[s].begin(); i != adj[s].end(); ++i) 
+            if (*i == e.end) return false;
+            if (!visited[*i] && weight(s, *i) < max_weight)
+                stack.push(*i);
+        }
+    }
+
+    return true;
+}
+	
+
+\end{lstlisting}
+
+\end{document}

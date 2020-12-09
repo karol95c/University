@@ -1,0 +1,53 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{tabto}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\selectlanguage{polish}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{MnSymbol}
+\usepackage{graphicx}
+\author{Karol Cidyło}
+\title {Zadanie 4 z listy 5.}
+\usetikzlibrary{matrix}
+\begin{document}
+Karol Cidyło \newline \newline \newline
+Zadanie 4 z listy 5. \newline \newline
+Mamy dane dwa ciągi n - elementowe. Wykorzystując grę z adwersarzem mamy pokazać, że potrzeba \textbf{2n - 1} porównań, aby scalić te ciągi. 
+Musimy tak `złośliwie` konstruować ciągi dla adwersarza,aby było ich \textbf{2n} i każde porównanie algorytmu eliminowało maksymalnie jeden ciąg.\newline
+Scalanie możemy traktować jak np. część algorytmu sortowania przez scalanie, gdzie w końcowej fazie mamy dwa posortowane ciągi i chcemy połączyć je w jeden,
+również  posortowany ciąg. \newline \newline
+Weźmy zestaw wyjściowy(jest to ciąg posortowany rosnąco): \newline
+$x_0 = a_1, b_1, a_2, b_2, a_3, a_3,...,  a_n, b_n$ \newline
+Mając ciąg $x_0$ wyprodukujemy \textbf{2n - 1} innych zestawów danych takich, że dla każdych kolejnych ciągów $x_i$ będziemy zamieniać
+ze sobą elementy na pozycjach  \textbf{i} oraz \textbf{i + 1}. To znaczy: \newline
+$x_1 = b_1, a_1, a_2, b_2, a_3, a_3,...,  a_n, b_n$ \newline
+do \newline
+$x_{2n-1}= a_1, b_1, a_2, b_2, a_3, a_3,...,  b_n, a_n$ \newline \newline
+Razem z naszym zestawem wyjściowym mamy 2n zestawów danych.
+Dopóki mamy dwa zestawy zgodne z powyższymi algorytm musi być kontynuowany. Odpowiadamy na pytania gracza tak jak dla zestawu wyjściowego. \newline \newline
+Gracz zadaje pytania o stosunek $a_i$ do $b_j$. \newline\newline
+\textbf{Lemat.} \newline
+Jedno pytanie usuwa maksymalnie jeden zestaw. \newline\newline
+\textbf{Dowód lematu.} \newline
+Weżmy pytanie o stusunek $a_i$ do $b_j$.
+\begin{enumerate}
+  \item \textbf{j > i} Adwersarz mówi, że $a_i$ jest mniejsze od $b_j$. Nie wyklucza to żadnego zestawu danych z dostępnych. Jeśli $j > i$ to w następnych zestawach nie zamienimy ze sobą elementów $a_i$ oraz $b_i$, w zestawie wyjściowym kiedy $i < j$ mamy spełnione $a_i$ < $b_j$. \newpage
+  \item \textbf{i > j + 1} Adwersarz mówi, że $a_i$ jest większe od $b_j$. Nie wyklucza to żadnego zestawu. Każdy z dostępnych spełnia wymagania. Następne zestawy danych to przestawienie $a_i$ z $b_i$ oraz  $b_i$ z $a_{i+1}$, w zestawach odpowiednio  $x_{2i-1}$ oraz  $x_{2i}$. \textbf{i} oraz \textbf{j} różnią się co najmniej o 2.
+  \item \textbf{i = j} Adwersarz mówi, że $a_i$ jest mniejsze od $b_j$. Wyklucza to przypadek, gdzie $a_i$ jest większe od $b_i$ czyli ciąg $x_{2i-1}$
+   bo tam zamienialiśmy $a_i$ z $a_{i-1}$ miejscami. Wyklucza jeden zestaw.
+  \item \textbf{i = j + 1} Adwersarz mówi, że $a_i$ jest większe od $b_j$.  Wyklucza to przypadek, gdzie $a_i$ jest mniejsze od $b_{i-1}$ czyli ciąg $x_{2i-2}$, tam zamienialiśmy 
+  $a_{i-1}$ z $a_{i}$ miejscami. Wyklucza jeden zestaw.
+\end{enumerate}
+Każde zapytanie o $a_i$ oraz $b_j$ jest rozpatrywane w tym jednym z czterech przypadków. Otrzymujemy zatem, że każde zapytanie wyklucza maksymalnie jeden zestaw danych.
+\begin{flushright}
+\qedsymbol 
+\end{flushright}
+Na początku również :''wygenerowaliśmy'' \textbf{2n} zestawów. Wykorzystując lemat pokazujemy, że minimalnie potrzeba \textbf{2n - 1} pytań(porównań) do otrzymania końcowego rezultatu z odpowiednim zestawem danych. Czyli do scalenia dwóch ciągów n-elementowych.
+
+\end{document}
